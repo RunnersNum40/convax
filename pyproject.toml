@@ -4,10 +4,10 @@ version = "0.0.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "equinox>=0.13.2",
-    "jax>=0.8.2",
-]
+dependencies = ["equinox>=0.13.2", "jax>=0.8.2", "jaxtyping>=0.3.4"]
+
+[dependency-groups]
+dev = ["pytest>=9.0.2", "pytest-cov>=7.0.0"]
 
 [[tool.uv.index]]
 name = "testpypi"
