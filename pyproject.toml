@@ -9,6 +9,11 @@ dependencies = ["equinox>=0.13.2", "jax>=0.8.2", "jaxtyping>=0.3.4"]
 [dependency-groups]
 dev = ["pytest>=9.0.2", "pytest-cov>=7.0.0"]
 
+[tool.ruff.lint]
+fixable = ["I001", "F401"]
+ignore = ["E402", "E721", "E731", "E741", "F722", "E501"]
+select = ["E", "F", "I001"]
+
 [[tool.uv.index]]
 name = "testpypi"
 url = "https://test.pypi.org/simple/"
