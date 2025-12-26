@@ -1,9 +1,10 @@
 [project]
 name = "convax"
 version = "0.0.0"
-description = "Add your description here"
+description = "Convex set manipulation library in JAX with Equinox"
 readme = "README.md"
 requires-python = ">=3.13"
+authors = [{ name = "Theodore Pinkerton", email = "ted@tedpinkerton.ca" }]
 dependencies = ["equinox>=0.13.2", "jax>=0.8.2", "jaxtyping>=0.3.4"]
 
 [dependency-groups]
