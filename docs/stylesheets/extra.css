@@ -1,0 +1,52 @@
+:root {
+  --md-status--draft: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLW5vdGVib29rLXBlbi1pY29uIGx1Y2lkZS1ub3RlYm9vay1wZW4iPjxwYXRoIGQ9Ik0xMy40IDJINmEyIDIgMCAwIDAtMiAydjE2YTIgMiAwIDAgMCAyIDJoMTJhMiAyIDAgMCAwIDItMnYtNy40Ii8+PHBhdGggZD0iTTIgNmg0Ii8+PHBhdGggZD0iTTIgMTBoNCIvPjxwYXRoIGQ9Ik0yIDE0aDQiLz48cGF0aCBkPSJNMiAxOGg0Ii8+PHBhdGggZD0iTTIxLjM3OCA1LjYyNmExIDEgMCAxIDAtMy4wMDQtMy4wMDRsLTUuMDEgNS4wMTJhMiAyIDAgMCAwLS41MDYuODU0bC0uODM3IDIuODdhLjUuNSAwIDAgMCAuNjIuNjJsMi44Ny0uODM3YTIgMiAwIDAgMCAuODU0LS41MDZ6Ii8+PC9zdmc+");
+}
+
+.md-status--draft::after {
+  mask-image: var(--md-status--draft);
+}
+
+.md-grid {
+  max-width: 70rem;
+}
+
+/* Font sizes */
+
+html {
+  /* Decrease font size for overall webpage */
+  font-size: 110%;
+}
+
+.md-typeset .admonition {
+  /* Increase font size in admonitions */
+  font-size: 100% !important;
+}
+
+.md-typeset details {
+  /* Increase font size in details */
+  font-size: 100% !important;
+}
+
+.md-typeset h1 {
+  font-size: 1.6rem;
+}
+
+.md-typeset h2 {
+  font-size: 1.5rem;
+}
+
+.md-typeset h3 {
+  font-size: 1.3rem;
+}
+
+.md-typeset h4 {
+  font-size: 1.1rem;
+}
+
+.md-typeset h5 {
+  font-size: 0.9rem;
+}
+
+.md-typeset h6 {
+  font-size: 0.8rem;
+}

@@ -1,7 +1,46 @@
 [project]
 name = "convax"
 version = "0.0.0"
-description = "Add your description here"
+description = "Convex set manipulation library in JAX with Equinox"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+authors = [{ name = "Theodore Pinkerton", email = "ted@tedpinkerton.ca" }]
+dependencies = [
+  "equinox>=0.13.2",
+  "jax>=0.8.2",
+  "jaxtyping>=0.3.4",
+  "lineax>=0.0.8",
+  "optimistix>=0.0.11",
+]
+
+[dependency-groups]
+dev = [
+  "mkdocstrings-python>=2.0.1",
+  "pyright>=1.1.407",
+  "pytest>=9.0.2",
+  "pytest-cov>=7.0.0",
+  "pytest-xdist>=3.8.0",
+  "ruff>=0.14.10",
+  "zensical>=0.0.15",
+]
+
+[tool.pyright]
+reportIncompatibleMethodOverride = true
+reportIncompatibleVariableOverride = false # Incompatible with eqx.AbstractVar
+reportFunctionMemberAccess = false
+include = ["src"]
+
+[tool.pytest]
+addopts = ["--cov=convax", "--import-mode=importlib", "-Werror"]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+fixable = ["I001", "F401"]
+ignore = ["E402", "E721", "E731", "E741", "F722", "E501"]
+select = ["E", "F", "I001"]
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
