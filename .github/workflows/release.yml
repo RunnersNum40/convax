@@ -13,11 +13,32 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v5
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: "0.12.5"
+          python-version: "3.13"
+          enable-cache: true
+      - name: Verify tag version
+        run: test "${GITHUB_REF_NAME#v}" = "$(uv version --short)"
+      - name: Check lockfile
+        run: uv lock --check
+      - name: Check formatting
+        run: uv run --locked ruff format --check .
+      - name: Lint
+        run: uv run --locked ruff check .
+      - name: Type check
+        run: uv run --locked ty check
+      - name: Test
+        run: uv run --locked pytest
       - name: Build
         run: uv build
+      - name: Check wheel installation
+        run: uv run --isolated --no-project --with dist/*.whl python -c "import convax"
       - name: Upload build
         uses: actions/upload-artifact@v6
         with:
@@ -31,18 +52,24 @@ jobs:
     environment:
       name: testpypi
     permissions:
+      contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Download built distributions
         uses: actions/download-artifact@v7
         with:
           name: dist
           path: dist/
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: "0.12.5"
       - name: Publish to TestPyPI
-        run: uv publish --index testpypi
+        run: uv publish --index testpypi dist/*
 
   publish:
     name: Publish to PyPI
@@ -59,6 +86,8 @@ jobs:
           name: dist
           path: dist/
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: "0.12.5"
       - name: Publish to PyPI
-        run: uv publish
+        run: uv publish dist/*

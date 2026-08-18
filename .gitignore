@@ -5,9 +5,11 @@ build/
 dist/
 wheels/
 *.egg-info
+site/
 
 # Virtual environments
 .venv
 
 # Pytest Coverage
 .coverage
+htmlcov/
