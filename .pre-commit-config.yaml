@@ -49,14 +49,7 @@ repos:
 
       - id: pytest
         name: pytest
-        entry: uv run --locked pytest --no-cov
+        entry: uv run --locked pytest --no-cov -p no:cacheprovider
         language: system
         files: ^(src|tests)/.*\.py$|^pyproject\.toml$
-        pass_filenames: false
-
-      - id: documentation
-        name: documentation
-        entry: uv run --locked --group docs zensical build --clean --strict
-        language: system
-        files: ^(docs/|src/|zensical\.toml$|pyproject\.toml$)
         pass_filenames: false

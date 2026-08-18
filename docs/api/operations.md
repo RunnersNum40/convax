@@ -1,4 +1,17 @@
 # Operations
 
-Operation reference documentation will be generated with the initial public
-implementation.
+::: convax.affine_map
+
+::: convax.affine_preimage
+
+::: convax.project_coordinates
+
+::: convax.translate
+
+::: convax.negate
+
+::: convax.minkowski_sum
+
+::: convax.convex_hull
+
+::: convax.intersection

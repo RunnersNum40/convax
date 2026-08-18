@@ -1,4 +1,25 @@
 # Sets
 
-Set reference documentation will be generated with the initial public
-implementation.
+::: convax.AbstractConvexSet
+
+::: convax.AbstractSupportSet
+
+::: convax.AbstractPointContainmentSet
+
+::: convax.Ellipsoid
+
+::: convax.Zonotope
+
+::: convax.VertexPolytope
+
+::: convax.HalfspacePolyhedron
+
+::: convax.AffineImage
+
+::: convax.MinkowskiSum
+
+::: convax.ConvexHull
+
+::: convax.SupportResult
+
+::: convax.AxisAlignedBounds

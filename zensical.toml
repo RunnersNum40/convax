@@ -6,16 +6,11 @@ repo_name = "RunnersNum40/convax"
 edit_uri = "edit/main/docs"
 site_description = "Convex set manipulation library in JAX with Equinox"
 site_author = "Theodore Pinkerton"
-copyright = "&copy; 2025-2026 Theodore Pinkerton"
+copyright = "&copy; 2026 Theodore Pinkerton"
 strict = true
-nav = [
-  { "Home" = "index.md" },
-  { "Guide" = "guide.md" },
-  { "API reference" = [
-    "api/index.md",
-    { "Sets" = "api/sets.md" },
-    { "Operations" = "api/operations.md" },
-  ] },
+extra_javascript = [
+  "javascripts/mathjax.js",
+  "https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js",
 ]
 extra_css = ["stylesheets/extra.css"]
 
@@ -27,8 +22,6 @@ invalid_link_anchors = true
 variant = "modern"
 language = "en"
 features = [
-  "content.action.edit",
-  "content.action.view",
   "content.code.copy",
   "content.code.select",
   "content.code.annotate",
@@ -37,7 +30,6 @@ features = [
   "content.tooltips",
   "header.autohide",
   "navigation.indexes",
-  "navigation.footer",
   "navigation.instant",
   "navigation.instant.prefetch",
   "navigation.instant.progress",
@@ -86,7 +78,7 @@ filters = "public"
 members_order = "source"
 separate_signature = true
 show_root_full_path = false
-show_root_heading = false
+show_root_heading = true
 show_root_toc_entry = false
 show_signature_annotations = true
 show_signature_type_parameters = true

@@ -1,10 +1,26 @@
 # Convax
 
-Convax provides immutable convex set representations and operations for JAX.
-The API is designed to compose inside user-controlled JIT regions and to remain
-compatible with automatic differentiation and vectorization.
+Convax is a [JAX](https://jax.readthedocs.io/en/latest/)-based library for convex analysis.
+It provides convex sets and operations on them compatible with JAX transformations such as `jax.jit`, `jax.grad` (where possible), and `jax.vmap`.
 
-Convax is in early development and does not yet have a public release.
+## Installation
 
-- Read the [guide](guide.md) for the mathematical and transformation contracts.
-- Browse the [API reference](api/index.md) for the public interface.
+```console
+pip install convax
+```
+
+## Basic Usage
+
+```python
+import jax
+import jax.numpy as jnp
+
+from convax import Ellipsoid
+
+ellipsoid = Ellipsoid(
+    center=jnp.array([1.0, -1.0]),
+    generator_matrix=jnp.array([[2.0, 0.0], [0.0, 1.0]]),
+)
+directions = jnp.eye(2)
+support_values = jax.jit(jax.vmap(ellipsoid.support_value))(directions)
+```
