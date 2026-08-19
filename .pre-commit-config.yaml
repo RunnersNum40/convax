@@ -51,5 +51,5 @@ repos:
         name: pytest
         entry: uv run --locked pytest --no-cov -p no:cacheprovider
         language: system
-        files: ^(src|tests)/.*\.py$|^pyproject\.toml$
+        files: ^(src|tests|examples)/.*\.py$|^pyproject\.toml$
         pass_filenames: false

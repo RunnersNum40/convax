@@ -14,6 +14,17 @@ extra_javascript = [
 ]
 extra_css = ["stylesheets/extra.css"]
 
+[project.markdown_extensions]
+pymdownx.arithmatex.generic = true
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.snippets.base_path = ["."]
+pymdownx.snippets.check_paths = true
+pymdownx.superfences = {}
+admonition = {}
+pymdownx.details = {}
+
 [project.validation]
 invalid_links = true
 invalid_link_anchors = true
