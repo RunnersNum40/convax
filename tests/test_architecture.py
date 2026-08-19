@@ -10,6 +10,7 @@ from convax import (
     AbstractSupportSet,
     AffineImage,
     AxisAlignedBounds,
+    ConstrainedZonotope,
     ConvexHull,
     Ellipsoid,
     HalfspacePolyhedron,
@@ -24,6 +25,7 @@ SOURCE_FILES = tuple(SOURCE_ROOT.rglob("*.py"))
 FINAL_CLASSES = (
     AffineImage,
     AxisAlignedBounds,
+    ConstrainedZonotope,
     ConvexHull,
     Ellipsoid,
     HalfspacePolyhedron,

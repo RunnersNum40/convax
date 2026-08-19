@@ -8,6 +8,7 @@ from convax.sets._composite import (
     ConvexHull,
     MinkowskiSum,
 )
+from convax.sets._constrained_zonotope import ConstrainedZonotope
 from convax.sets._ellipsoid import Ellipsoid
 from convax.sets._halfspace_polyhedron import HalfspacePolyhedron
 from convax.sets._results import (
@@ -23,6 +24,7 @@ __all__ = [
     "AbstractSupportSet",
     "AffineImage",
     "AxisAlignedBounds",
+    "ConstrainedZonotope",
     "ConvexHull",
     "Ellipsoid",
     "HalfspacePolyhedron",

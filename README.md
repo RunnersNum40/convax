@@ -1,12 +1,13 @@
 <h1 align='center'>Convax</h1>
 
-Convax is an Equinox-based convex set manipulation library for JAX. Its
+Convax is an Equinox-based convex set manipulation library for JAX whose
 numerical operations compose with `jit`, `vmap`, and, where mathematically
 applicable, `grad`.
 
-The solver-free core currently provides ellipsoids, zonotopes, vertex
-polytopes, halfspace polyhedra, affine maps, coordinate projections,
-Minkowski sums, convex hulls, and halfspace intersections.
+The solver-free core currently provides ellipsoids, zonotopes, constrained
+zonotopes, vertex polytopes, halfspace polyhedra, affine maps, coordinate
+projections, Minkowski sums, convex hulls, and exact intersections for
+halfspace and constrained-zonotope representations.
 
 ```python
 import jax

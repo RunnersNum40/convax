@@ -10,6 +10,8 @@
 
 ::: convax.Zonotope
 
+::: convax.ConstrainedZonotope
+
 ::: convax.VertexPolytope
 
 ::: convax.HalfspacePolyhedron
