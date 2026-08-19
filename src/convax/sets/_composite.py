@@ -5,15 +5,19 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax._arrays import as_float_array, require_matrix, require_vector_dimension
 from convax._types import MatrixLike, VectorLike
-from convax.sets._abstract import AbstractSupportSet, normalize_query_vector
+from convax.sets._abstract import (
+    AbstractAffineMapSet,
+    AbstractSupportSet,
+    normalize_affine_map_parameters,
+    normalize_query_vector,
+)
 from convax.sets._results import SupportResult
 
 
 @final
-class AffineImage(AbstractSupportSet):
-    r"""An affine image :math:`\{Ax + b \mid x \in X\}` of a support set."""
+class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
+    r"""Affine image :math:`\{Ax + b \mid x \in X\}` of a support set."""
 
     convex_set: AbstractSupportSet
     matrix: Float[Array, "output_dimension input_dimension"]
@@ -25,22 +29,15 @@ class AffineImage(AbstractSupportSet):
         matrix: MatrixLike,
         offset: VectorLike | None = None,
     ) -> None:
-        matrix = as_float_array(matrix)
-        require_matrix("matrix", matrix)
-        if matrix.shape[1] != convex_set.ambient_dimension:
-            raise ValueError(
-                "matrix columns must match the set dimension, got "
-                f"{matrix.shape} and {convex_set.ambient_dimension}"
-            )
-        if offset is None:
-            offset = jnp.zeros(matrix.shape[0], dtype=matrix.dtype)
-        else:
-            offset = as_float_array(offset)
-        require_vector_dimension("offset", offset, matrix.shape[0])
-        dtype = jnp.result_type(convex_set.dtype, matrix.dtype, offset.dtype)
+        matrix, offset = normalize_affine_map_parameters(
+            matrix,
+            offset,
+            convex_set.ambient_dimension,
+            dtype=convex_set.dtype,
+        )
         self.convex_set = convex_set
-        self.matrix = matrix.astype(dtype)
-        self.offset = offset.astype(dtype)
+        self.matrix = matrix
+        self.offset = offset
 
     @property
     def ambient_dimension(self) -> int:
@@ -49,6 +46,24 @@ class AffineImage(AbstractSupportSet):
     @property
     def dtype(self):
         return self.matrix.dtype
+
+    @override
+    def affine_map(
+        self,
+        matrix: MatrixLike,
+        offset: VectorLike | None = None,
+    ) -> "AffineImage":
+        matrix, offset = normalize_affine_map_parameters(
+            matrix,
+            offset,
+            self.ambient_dimension,
+            dtype=self.dtype,
+        )
+        return AffineImage(
+            self.convex_set,
+            matrix @ self.matrix,
+            matrix @ self.offset + offset,
+        )
 
     @override
     def support(self, direction: VectorLike) -> SupportResult:
@@ -64,7 +79,7 @@ class AffineImage(AbstractSupportSet):
 
 @final
 class MinkowskiSum(AbstractSupportSet):
-    r"""The Minkowski sum :math:`\{x + y \mid x \in X, y \in Y\}`."""
+    r"""Minkowski sum :math:`\{x + y \mid x \in X, y \in Y\}`."""
 
     left_set: AbstractSupportSet
     right_set: AbstractSupportSet
@@ -103,7 +118,7 @@ class MinkowskiSum(AbstractSupportSet):
 
 @final
 class ConvexHull(AbstractSupportSet):
-    """The convex hull of two compact convex sets."""
+    """Convex hull of two compact convex sets."""
 
     left_set: AbstractSupportSet
     right_set: AbstractSupportSet

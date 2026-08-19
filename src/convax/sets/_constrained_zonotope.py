@@ -1,4 +1,4 @@
-from typing import final
+from typing import final, override
 
 import jax.numpy as jnp
 from jax import Array
@@ -7,14 +7,15 @@ from jaxtyping import Float
 from convax._arrays import as_float_array, require_matrix, require_vector
 from convax._types import MatrixLike, VectorLike
 from convax.sets._abstract import (
-    AbstractConvexSet,
+    AbstractAffineMapSet,
+    _affine_map_center_and_generator_matrix,
     normalize_center_and_generator_matrix,
 )
 
 
 @final
-class ConstrainedZonotope(AbstractConvexSet):
-    r"""An equality-constrained affine image of the unit infinity-norm ball.
+class ConstrainedZonotope(AbstractAffineMapSet):
+    r"""Equality-constrained affine image of the unit infinity-norm ball.
 
     Represents
     :math:`\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1, A\xi = b\}`.
@@ -78,3 +79,23 @@ class ConstrainedZonotope(AbstractConvexSet):
     @property
     def dtype(self):
         return self.center.dtype
+
+    @override
+    def affine_map(
+        self,
+        matrix: MatrixLike,
+        offset: VectorLike | None = None,
+    ) -> "ConstrainedZonotope":
+        center, generator_matrix = _affine_map_center_and_generator_matrix(
+            self.center,
+            self.generator_matrix,
+            matrix,
+            offset,
+            source_dtype=self.dtype,
+        )
+        return ConstrainedZonotope(
+            center,
+            generator_matrix,
+            self.constraint_matrix,
+            self.constraint_values,
+        )

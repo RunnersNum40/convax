@@ -6,13 +6,18 @@ from jaxtyping import Float
 
 from convax._arrays import as_float_array, require_matrix
 from convax._types import MatrixLike, VectorLike
-from convax.sets._abstract import AbstractSupportSet, normalize_query_vector
+from convax.sets._abstract import (
+    AbstractAffineMapSet,
+    AbstractSupportSet,
+    normalize_affine_map_parameters,
+    normalize_query_vector,
+)
 from convax.sets._results import SupportResult
 
 
 @final
-class VertexPolytope(AbstractSupportSet):
-    """The convex hull of an explicit nonempty collection of vertices.
+class VertexPolytope(AbstractAffineMapSet, AbstractSupportSet):
+    """Convex hull of an explicit nonempty vertex collection.
 
     Args:
         vertices: Vertices with shape ``(vertex_count, ambient_dimension)``.
@@ -34,6 +39,20 @@ class VertexPolytope(AbstractSupportSet):
     @property
     def dtype(self):
         return self.vertices.dtype
+
+    @override
+    def affine_map(
+        self,
+        matrix: MatrixLike,
+        offset: VectorLike | None = None,
+    ) -> "VertexPolytope":
+        matrix, offset = normalize_affine_map_parameters(
+            matrix,
+            offset,
+            self.ambient_dimension,
+            dtype=self.dtype,
+        )
+        return VertexPolytope(self.vertices.astype(matrix.dtype) @ matrix.T + offset)
 
     @override
     def support(self, direction: VectorLike) -> SupportResult:

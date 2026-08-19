@@ -1,17 +1,11 @@
-from convax.operations import (
-    affine_map,
-    affine_preimage,
-    convex_hull,
-    intersection,
-    minkowski_sum,
-    negate,
-    project_coordinates,
-    translate,
-)
+from convax.operations import convex_hull, intersection, minkowski_sum
 from convax.sets import (
+    AbstractAffineMapSet,
     AbstractConvexSet,
+    AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
+    AbstractTranslationSet,
     AffineImage,
     AxisAlignedBounds,
     ConstrainedZonotope,
@@ -25,9 +19,12 @@ from convax.sets import (
 )
 
 __all__ = [
+    "AbstractAffineMapSet",
     "AbstractConvexSet",
+    "AbstractNegationSet",
     "AbstractPointContainmentSet",
     "AbstractSupportSet",
+    "AbstractTranslationSet",
     "AffineImage",
     "AxisAlignedBounds",
     "ConstrainedZonotope",
@@ -38,12 +35,7 @@ __all__ = [
     "SupportResult",
     "VertexPolytope",
     "Zonotope",
-    "affine_map",
-    "affine_preimage",
     "convex_hull",
     "intersection",
     "minkowski_sum",
-    "negate",
-    "project_coordinates",
-    "translate",
 ]

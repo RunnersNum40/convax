@@ -22,6 +22,20 @@ def test_support_vectorizes_over_directions() -> None:
     assert jnp.allclose(values, jnp.array([2.0, 1.0]))
 
 
+def test_affine_map_preserves_vertex_representation() -> None:
+    polytope = VertexPolytope([[0, 0], [2, 0], [0, 1]])
+    matrix = jnp.array([[1.0, 2.0]])
+    offset = jnp.array([0.5])
+
+    image = polytope.affine_map(matrix, offset)
+
+    assert isinstance(image, VertexPolytope)
+    assert jnp.array_equal(
+        image.vertices,
+        polytope.vertices @ matrix.T + offset,
+    )
+
+
 def test_constructor_rejects_empty_vertices() -> None:
     with pytest.raises(ValueError, match="at least one"):
         VertexPolytope(jnp.empty((0, 2)))

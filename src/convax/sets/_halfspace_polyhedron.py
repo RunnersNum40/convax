@@ -4,20 +4,29 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Bool, Float, ScalarLike
 
-from convax._arrays import as_float_array, require_matrix, require_vector
+from convax._arrays import (
+    as_float_array,
+    require_matrix,
+    require_vector,
+    require_vector_dimension,
+)
 from convax._types import MatrixLike, VectorLike
 from convax.sets._abstract import (
+    AbstractNegationSet,
     AbstractPointContainmentSet,
+    AbstractTranslationSet,
     normalize_query_vector,
     normalize_tolerance,
 )
 
 
 @final
-class HalfspacePolyhedron(AbstractPointContainmentSet):
-    r"""A polyhedron defined by affine inequalities and equalities.
-
-    Represents :math:`\{x \mid Ax \leq b, Ex = f\}`. The representation may
+class HalfspacePolyhedron(
+    AbstractTranslationSet,
+    AbstractNegationSet,
+    AbstractPointContainmentSet,
+):
+    r"""Represents :math:`\{x \mid Ax \leq b, Ex = f\}`. The representation may
     describe an unbounded, lower-dimensional, or empty set.
 
     Args:
@@ -93,6 +102,64 @@ class HalfspacePolyhedron(AbstractPointContainmentSet):
     @property
     def dtype(self):
         return self.inequality_matrix.dtype
+
+    def affine_preimage(
+        self,
+        matrix: MatrixLike,
+        offset: VectorLike | None = None,
+    ) -> "HalfspacePolyhedron":
+        r"""Return :math:`\{x \mid Ax + b \in P\}`."""
+        matrix = as_float_array(matrix)
+        require_matrix("matrix", matrix)
+        if matrix.shape[0] != self.ambient_dimension:
+            raise ValueError(
+                "matrix rows must match the polyhedron dimension, got "
+                f"{matrix.shape} and {self.ambient_dimension}"
+            )
+        if offset is None:
+            offset = jnp.zeros(matrix.shape[0], dtype=matrix.dtype)
+        else:
+            offset = as_float_array(offset)
+        require_vector_dimension("offset", offset, matrix.shape[0])
+        dtype = jnp.result_type(self.dtype, matrix.dtype, offset.dtype)
+        matrix = matrix.astype(dtype)
+        offset = offset.astype(dtype)
+        inequality_matrix = self.inequality_matrix.astype(dtype)
+        inequality_bounds = self.inequality_bounds.astype(dtype)
+        equality_matrix = self.equality_matrix.astype(dtype)
+        equality_values = self.equality_values.astype(dtype)
+        return HalfspacePolyhedron(
+            inequality_matrix @ matrix,
+            inequality_bounds - inequality_matrix @ offset,
+            equality_matrix @ matrix,
+            equality_values - equality_matrix @ offset,
+        )
+
+    @override
+    def translate(self, offset: VectorLike) -> "HalfspacePolyhedron":
+        offset = as_float_array(offset)
+        require_vector_dimension("offset", offset, self.ambient_dimension)
+        dtype = jnp.result_type(self.dtype, offset.dtype)
+        inequality_matrix = self.inequality_matrix.astype(dtype)
+        inequality_bounds = self.inequality_bounds.astype(dtype)
+        equality_matrix = self.equality_matrix.astype(dtype)
+        equality_values = self.equality_values.astype(dtype)
+        offset = offset.astype(dtype)
+        return HalfspacePolyhedron(
+            inequality_matrix,
+            inequality_bounds + inequality_matrix @ offset,
+            equality_matrix,
+            equality_values + equality_matrix @ offset,
+        )
+
+    @override
+    def negate(self) -> "HalfspacePolyhedron":
+        return HalfspacePolyhedron(
+            -self.inequality_matrix,
+            self.inequality_bounds,
+            -self.equality_matrix,
+            self.equality_values,
+        )
 
     @override
     def contains(

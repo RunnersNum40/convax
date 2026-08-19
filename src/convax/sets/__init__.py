@@ -1,7 +1,10 @@
 from convax.sets._abstract import (
+    AbstractAffineMapSet,
     AbstractConvexSet,
+    AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
+    AbstractTranslationSet,
 )
 from convax.sets._composite import (
     AffineImage,
@@ -19,9 +22,12 @@ from convax.sets._vertex_polytope import VertexPolytope
 from convax.sets._zonotope import Zonotope
 
 __all__ = [
+    "AbstractAffineMapSet",
     "AbstractConvexSet",
+    "AbstractNegationSet",
     "AbstractPointContainmentSet",
     "AbstractSupportSet",
+    "AbstractTranslationSet",
     "AffineImage",
     "AxisAlignedBounds",
     "ConstrainedZonotope",

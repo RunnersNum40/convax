@@ -3,7 +3,7 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax import Ellipsoid, Zonotope, affine_map, convex_hull, minkowski_sum
+from convax import Ellipsoid, Zonotope, convex_hull, minkowski_sum
 
 
 @jax.jit
@@ -23,14 +23,14 @@ def query_reachable_envelope(
     dynamics_matrix = jnp.array([[1.0, time_step], [0.0, 1.0]])
     control_matrix = jnp.array([[0.5 * time_step**2], [time_step]])
 
-    propagated_state = affine_map(initial_state, dynamics_matrix)
+    propagated_state = initial_state.affine_map(dynamics_matrix)
     nominal_reachable_set = minkowski_sum(
         propagated_state,
-        affine_map(nominal_control, control_matrix),
+        nominal_control.affine_map(control_matrix),
     )
     emergency_reachable_set = minkowski_sum(
         propagated_state,
-        affine_map(emergency_control, control_matrix),
+        emergency_control.affine_map(control_matrix),
     )
     reachable_envelope = minkowski_sum(
         convex_hull(nominal_reachable_set, emergency_reachable_set),

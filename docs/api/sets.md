@@ -2,6 +2,12 @@
 
 ::: convax.AbstractConvexSet
 
+::: convax.AbstractAffineMapSet
+
+::: convax.AbstractTranslationSet
+
+::: convax.AbstractNegationSet
+
 ::: convax.AbstractSupportSet
 
 ::: convax.AbstractPointContainmentSet

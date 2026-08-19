@@ -5,9 +5,12 @@ from pathlib import Path
 import pytest
 
 from convax import (
+    AbstractAffineMapSet,
     AbstractConvexSet,
+    AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
+    AbstractTranslationSet,
     AffineImage,
     AxisAlignedBounds,
     ConstrainedZonotope,
@@ -46,7 +49,14 @@ def is_jit_decorator(decorator: ast.expr) -> bool:
 
 @pytest.mark.parametrize(
     "abstract_class",
-    [AbstractConvexSet, AbstractPointContainmentSet, AbstractSupportSet],
+    [
+        AbstractAffineMapSet,
+        AbstractConvexSet,
+        AbstractNegationSet,
+        AbstractPointContainmentSet,
+        AbstractSupportSet,
+        AbstractTranslationSet,
+    ],
 )
 def test_abstract_classes_cannot_be_instantiated(abstract_class: type) -> None:
     with pytest.raises(TypeError):

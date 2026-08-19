@@ -7,12 +7,8 @@ import pytest
 from convax import (
     ConstrainedZonotope,
     Zonotope,
-    affine_map,
     intersection,
     minkowski_sum,
-    negate,
-    project_coordinates,
-    translate,
 )
 
 
@@ -32,8 +28,12 @@ def test_affine_map_preserves_constrained_zonotope_representation() -> None:
     matrix = jnp.array([[2.0, 0.0], [1.0, -1.0]])
     offset = jnp.array([0.5, 2.0])
 
-    eager = affine_map(source, matrix, offset)
-    compiled = jax.jit(affine_map)(source, matrix, offset)
+    eager = source.affine_map(matrix, offset)
+    compiled = jax.jit(
+        lambda convex_set, affine_matrix, affine_offset: convex_set.affine_map(
+            affine_matrix, affine_offset
+        )
+    )(source, matrix, offset)
 
     assert jnp.allclose(eager.center, matrix @ source.center + offset)
     assert jnp.allclose(eager.generator_matrix, matrix @ source.generator_matrix)
@@ -54,7 +54,7 @@ def test_affine_map_promotes_before_arithmetic() -> None:
     offset = jnp.array([0.0004], dtype=jnp.float16)
     expected = matrix @ source.center.astype(jnp.float32) + offset.astype(jnp.float32)
 
-    image = affine_map(source, matrix, offset)
+    image = source.affine_map(matrix, offset)
 
     assert image.dtype == jnp.float32
     assert jnp.array_equal(image.center, expected)
@@ -69,7 +69,11 @@ def test_coordinate_projection_preserves_order_constraints_and_duplicates() -> N
     )
     coordinates = jnp.array([2, 0, 2])
 
-    projected = jax.jit(project_coordinates)(source, coordinates)
+    projected = jax.jit(
+        lambda convex_set, selected_coordinates: convex_set.project_coordinates(
+            selected_coordinates
+        )
+    )(source, coordinates)
 
     assert jnp.array_equal(projected.center, jnp.array([3.0, 1.0, 3.0]))
     assert jnp.array_equal(
@@ -93,8 +97,12 @@ def test_zero_dimensional_operations_are_jittable_and_vectorizable() -> None:
         constraint_values,
     )
 
-    eager_projection = project_coordinates(source, coordinates)
-    compiled_projection = jax.jit(project_coordinates)(source, coordinates)
+    eager_projection = source.project_coordinates(coordinates)
+    compiled_projection = jax.jit(
+        lambda convex_set, selected_coordinates: convex_set.project_coordinates(
+            selected_coordinates
+        )
+    )(source, coordinates)
     batched_sets = jax.vmap(
         lambda center: ConstrainedZonotope(
             center,
@@ -104,7 +112,7 @@ def test_zero_dimensional_operations_are_jittable_and_vectorizable() -> None:
         )
     )(centers)
     batched_projections = jax.jit(
-        jax.vmap(lambda convex_set: project_coordinates(convex_set, coordinates))
+        jax.vmap(lambda convex_set: convex_set.project_coordinates(coordinates))
     )(batched_sets)
     summed = jax.jit(minkowski_sum)(source, source)
     intersected = jax.jit(intersection)(source, source)
@@ -124,8 +132,8 @@ def test_translation_and_negation_preserve_latent_constraints() -> None:
     source = constrained_zonotope([1, -1])
     offset = jnp.array([2.0, 3.0])
 
-    translated = translate(source, offset)
-    reflected = negate(source)
+    translated = source.translate(offset)
+    reflected = source.negate()
 
     assert jnp.array_equal(translated.center, source.center + offset)
     assert jnp.array_equal(translated.generator_matrix, source.generator_matrix)
@@ -330,7 +338,7 @@ def test_operations_vectorize_over_homogeneous_sets_and_differentiate() -> None:
             constraint_values,
         )
     )(centers)
-    images = jax.jit(jax.vmap(lambda convex_set: affine_map(convex_set, matrix)))(
+    images = jax.jit(jax.vmap(lambda convex_set: convex_set.affine_map(matrix)))(
         batched_sets
     )
 
@@ -341,7 +349,7 @@ def test_operations_vectorize_over_homogeneous_sets_and_differentiate() -> None:
             constraint_matrix,
             constraint_values,
         )
-        return jnp.sum(affine_map(convex_set, matrix).center)
+        return jnp.sum(convex_set.affine_map(matrix).center)
 
     gradient = jax.jit(jax.grad(center_sum))(jnp.zeros(2))
 

@@ -38,6 +38,25 @@ def test_singleton_containment() -> None:
     assert not singleton.contains(jnp.array([1.0, 2.1]))
 
 
+def test_affine_map_preserves_ellipsoid_representation() -> None:
+    ellipsoid = Ellipsoid([1, -1], [[2, 0], [0, 1]])
+    matrix = jnp.array([[1.0, 2.0]])
+    offset = jnp.array([0.5])
+
+    eager = ellipsoid.affine_map(matrix, offset)
+    compiled = jax.jit(
+        lambda convex_set, affine_matrix, affine_offset: convex_set.affine_map(
+            affine_matrix, affine_offset
+        )
+    )(ellipsoid, matrix, offset)
+
+    assert isinstance(eager, Ellipsoid)
+    assert jnp.array_equal(eager.center, matrix @ ellipsoid.center + offset)
+    assert jnp.array_equal(eager.generator_matrix, matrix @ ellipsoid.generator_matrix)
+    assert jnp.array_equal(compiled.center, eager.center)
+    assert jnp.array_equal(compiled.generator_matrix, eager.generator_matrix)
+
+
 def test_support_is_jittable_vectorizable_and_differentiable() -> None:
     center = jnp.array([1.0, -1.0])
     generator_matrix = jnp.array([[2.0, 0.0], [0.0, 1.0]])

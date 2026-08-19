@@ -7,8 +7,10 @@ from jaxtyping import Bool, Float, ScalarLike
 
 from convax._types import MatrixLike, VectorLike
 from convax.sets._abstract import (
+    AbstractAffineMapSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
+    _affine_map_center_and_generator_matrix,
     normalize_center_and_generator_matrix,
     normalize_query_vector,
     normalize_tolerance,
@@ -17,8 +19,12 @@ from convax.sets._results import SupportResult
 
 
 @final
-class Ellipsoid(AbstractSupportSet, AbstractPointContainmentSet):
-    r"""An affine image of a Euclidean unit ball.
+class Ellipsoid(
+    AbstractAffineMapSet,
+    AbstractSupportSet,
+    AbstractPointContainmentSet,
+):
+    r"""Affine image of a Euclidean unit ball.
 
     Represents :math:`\{c + Gu \mid \lVert u \rVert_2 \leq 1\}`. The generator
     matrix may be rectangular or rank deficient.
@@ -48,6 +54,21 @@ class Ellipsoid(AbstractSupportSet, AbstractPointContainmentSet):
     @property
     def dtype(self):
         return self.center.dtype
+
+    @override
+    def affine_map(
+        self,
+        matrix: MatrixLike,
+        offset: VectorLike | None = None,
+    ) -> "Ellipsoid":
+        center, generator_matrix = _affine_map_center_and_generator_matrix(
+            self.center,
+            self.generator_matrix,
+            matrix,
+            offset,
+            source_dtype=self.dtype,
+        )
+        return Ellipsoid(center, generator_matrix)
 
     @override
     def support(self, direction: VectorLike) -> SupportResult:

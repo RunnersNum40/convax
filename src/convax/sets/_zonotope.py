@@ -6,7 +6,9 @@ from jaxtyping import Float
 
 from convax._types import MatrixLike, VectorLike
 from convax.sets._abstract import (
+    AbstractAffineMapSet,
     AbstractSupportSet,
+    _affine_map_center_and_generator_matrix,
     normalize_center_and_generator_matrix,
     normalize_query_vector,
 )
@@ -14,8 +16,8 @@ from convax.sets._results import SupportResult
 
 
 @final
-class Zonotope(AbstractSupportSet):
-    r"""An affine image of a unit infinity-norm ball.
+class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
+    r"""Affine image of a unit infinity-norm ball.
 
     Represents :math:`\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1\}`.
 
@@ -44,6 +46,21 @@ class Zonotope(AbstractSupportSet):
     @property
     def dtype(self):
         return self.center.dtype
+
+    @override
+    def affine_map(
+        self,
+        matrix: MatrixLike,
+        offset: VectorLike | None = None,
+    ) -> "Zonotope":
+        center, generator_matrix = _affine_map_center_and_generator_matrix(
+            self.center,
+            self.generator_matrix,
+            matrix,
+            offset,
+            source_dtype=self.dtype,
+        )
+        return Zonotope(center, generator_matrix)
 
     @override
     def support(self, direction: VectorLike) -> SupportResult:

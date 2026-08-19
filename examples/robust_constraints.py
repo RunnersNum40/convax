@@ -6,7 +6,6 @@ from jaxtyping import Bool, Float
 from convax import (
     HalfspacePolyhedron,
     Zonotope,
-    affine_preimage,
     intersection,
 )
 
@@ -30,8 +29,7 @@ def classify_robustly_admissible_states(
         output_limits.inequality_matrix,
         output_limits.inequality_bounds - disturbance_margins,
     )
-    robust_output_preimage = affine_preimage(
-        tightened_output_limits,
+    robust_output_preimage = tightened_output_limits.affine_preimage(
         output_matrix,
         output_offset,
     )

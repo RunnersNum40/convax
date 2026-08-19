@@ -37,6 +37,39 @@ def test_axis_aligned_bounds_are_tight_and_jittable() -> None:
     assert jnp.allclose(compiled_bounds.upper, eager_bounds.upper)
 
 
+def test_affine_map_preserves_zonotope_representation() -> None:
+    zonotope = Zonotope([1, -1], [[2, 0], [0, 1]])
+    matrix = jnp.array([[1.0, 2.0]])
+    offset = jnp.array([0.5])
+
+    image = zonotope.affine_map(matrix, offset)
+
+    assert isinstance(image, Zonotope)
+    assert jnp.array_equal(image.center, matrix @ zonotope.center + offset)
+    assert jnp.array_equal(image.generator_matrix, matrix @ zonotope.generator_matrix)
+
+
+def test_affine_map_promotes_mixed_dtypes() -> None:
+    center = jnp.array([1.0, -2.0], dtype=jnp.float16)
+    generator_matrix = jnp.array([[2.0, 0.0], [0.0, 1.0]], dtype=jnp.float16)
+    matrix = jnp.array([[1.0, 2.0]], dtype=jnp.float32)
+    offset = jnp.array([0.5], dtype=jnp.float16)
+    zonotope = Zonotope(center, generator_matrix)
+    expected_center = matrix @ center.astype(jnp.float32) + offset.astype(jnp.float32)
+    expected_generator_matrix = matrix @ generator_matrix.astype(jnp.float32)
+
+    eager_image = zonotope.affine_map(matrix, offset)
+    compiled_image = jax.jit(lambda convex_set: convex_set.affine_map(matrix, offset))(
+        zonotope
+    )
+
+    for image in (eager_image, compiled_image):
+        assert image.center.dtype == jnp.float32
+        assert image.generator_matrix.dtype == jnp.float32
+        assert jnp.array_equal(image.center, expected_center)
+        assert jnp.array_equal(image.generator_matrix, expected_generator_matrix)
+
+
 def test_constructor_rejects_incompatible_shapes() -> None:
     with pytest.raises(ValueError, match="rows must match"):
         Zonotope(jnp.zeros(2), jnp.zeros((3, 1)))
