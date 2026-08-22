@@ -75,7 +75,11 @@ class Ellipsoid(
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )
-        latent_direction = self.generator_matrix.T @ direction
+
+        center = self.center.astype(direction.dtype)
+        generator_matrix = self.generator_matrix.astype(direction.dtype)
+
+        latent_direction = generator_matrix.T @ direction
         latent_norm = jnp.linalg.norm(latent_direction)
 
         def nonzero_support_point() -> Float[Array, "ambient_dimension"]:
@@ -86,9 +90,9 @@ class Ellipsoid(
         point = jax.lax.cond(
             latent_norm > 0,
             nonzero_support_point,
-            lambda: self.center,
+            lambda: center,
         )
-        value = self.center @ direction + latent_norm
+        value = center @ direction + latent_norm
         return SupportResult(value=value, point=point)
 
     @override
