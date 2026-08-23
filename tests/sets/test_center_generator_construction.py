@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import pytest
 
 from convax import Ellipsoid, Zonotope
-from convax._types import MatrixLike, VectorLike
+from convax._utils import MatrixLike, VectorLike
 
 type CenterGeneratorSet = type[Ellipsoid] | type[Zonotope]
 

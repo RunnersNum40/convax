@@ -4,19 +4,20 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Bool, Float, ScalarLike
 
-from convax._arrays import (
+from convax._utils import (
+    MatrixLike,
+    VectorLike,
     as_float_array,
+    normalize_query_vector,
+    normalize_tolerance,
     require_matrix,
     require_vector,
     require_vector_dimension,
 )
-from convax._types import MatrixLike, VectorLike
 from convax.sets._abstract import (
     AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractTranslationSet,
-    normalize_query_vector,
-    normalize_tolerance,
 )
 
 

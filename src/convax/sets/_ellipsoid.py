@@ -5,15 +5,19 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Bool, Float, ScalarLike
 
-from convax._types import MatrixLike, VectorLike
+from convax._utils import (
+    MatrixLike,
+    VectorLike,
+    _affine_map_center_and_generator_matrix,
+    _scaled_l2_norm,
+    normalize_center_and_generator_matrix,
+    normalize_query_vector,
+    normalize_tolerance,
+)
 from convax.sets._abstract import (
     AbstractAffineMapSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
-    _affine_map_center_and_generator_matrix,
-    normalize_center_and_generator_matrix,
-    normalize_query_vector,
-    normalize_tolerance,
 )
 from convax.sets._results import SupportResult
 
@@ -80,7 +84,7 @@ class Ellipsoid(
         generator_matrix = self.generator_matrix.astype(direction.dtype)
 
         latent_direction = generator_matrix.T @ direction
-        latent_norm = jnp.linalg.norm(latent_direction)
+        latent_norm = _scaled_l2_norm(latent_direction)
 
         def nonzero_support_point() -> Float[Array, "ambient_dimension"]:
             return self.center + self.generator_matrix @ (
@@ -113,14 +117,14 @@ class Ellipsoid(
         generator_matrix = self.generator_matrix.astype(dtype)
         displacement = point - center
         if generator_matrix.shape[1] == 0:
-            return jnp.linalg.norm(displacement) <= tolerance
+            return _scaled_l2_norm(displacement) <= tolerance
         latent_point = jnp.linalg.pinv(generator_matrix) @ displacement
-        reconstruction_error = jnp.linalg.norm(
+        reconstruction_error = _scaled_l2_norm(
             generator_matrix @ latent_point - displacement
         )
         displacement_scale = jnp.maximum(
-            jnp.linalg.norm(displacement), jnp.asarray(1, dtype=dtype)
+            _scaled_l2_norm(displacement), jnp.asarray(1, dtype=dtype)
         )
         in_affine_hull = reconstruction_error <= tolerance * displacement_scale
-        in_unit_ball = jnp.linalg.norm(latent_point) <= 1 + tolerance
+        in_unit_ball = _scaled_l2_norm(latent_point) <= 1 + tolerance
         return jnp.logical_and(in_affine_hull, in_unit_ball)

@@ -5,8 +5,7 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float, ScalarLike
 
-from convax._arrays import as_float_array, require_scalar, require_vector
-from convax._types import VectorLike
+from convax._utils import VectorLike, as_float_array, require_scalar, require_vector
 
 
 @final

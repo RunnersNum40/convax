@@ -5,12 +5,15 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax._types import MatrixLike, VectorLike
+from convax._utils import (
+    MatrixLike,
+    VectorLike,
+    normalize_affine_map_parameters,
+    normalize_query_vector,
+)
 from convax.sets._abstract import (
     AbstractAffineMapSet,
     AbstractSupportSet,
-    normalize_affine_map_parameters,
-    normalize_query_vector,
 )
 from convax.sets._results import SupportResult
 

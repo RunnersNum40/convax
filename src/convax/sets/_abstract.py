@@ -8,14 +8,7 @@ from jax import Array
 from jax.typing import DTypeLike
 from jaxtyping import Bool, Float, ScalarLike
 
-from convax._arrays import (
-    as_float_array,
-    require_matrix,
-    require_scalar,
-    require_vector,
-    require_vector_dimension,
-)
-from convax._types import IntegerVectorLike, MatrixLike, VectorLike
+from convax._utils import IntegerVectorLike, MatrixLike, VectorLike
 from convax.sets._results import AxisAlignedBounds, SupportResult
 
 
@@ -124,96 +117,3 @@ class AbstractPointContainmentSet(AbstractConvexSet):
             ValueError: If an input has invalid rank or dimension.
             EquinoxRuntimeError: If ``tolerance`` is negative or nonfinite.
         """
-
-
-def normalize_affine_map_parameters(
-    matrix: MatrixLike,
-    offset: VectorLike | None,
-    input_dimension: int,
-    *,
-    dtype: DTypeLike,
-) -> tuple[
-    Float[Array, "output_dimension input_dimension"],
-    Float[Array, "output_dimension"],
-]:
-    matrix = as_float_array(matrix)
-    require_matrix("matrix", matrix)
-    if matrix.shape[1] != input_dimension:
-        raise ValueError(
-            "matrix columns must match the set dimension, got "
-            f"{matrix.shape} and {input_dimension}"
-        )
-    if offset is None:
-        offset = jnp.zeros(matrix.shape[0], dtype=matrix.dtype)
-    else:
-        offset = as_float_array(offset)
-    require_vector_dimension("offset", offset, matrix.shape[0])
-    dtype = jnp.result_type(dtype, matrix.dtype, offset.dtype)
-    return matrix.astype(dtype), offset.astype(dtype)
-
-
-def _affine_map_center_and_generator_matrix(
-    center: Float[Array, "input_dimension"],
-    generator_matrix: Float[Array, "input_dimension generator_dimension"],
-    matrix: MatrixLike,
-    offset: VectorLike | None,
-    *,
-    source_dtype: DTypeLike,
-) -> tuple[
-    Float[Array, "output_dimension"],
-    Float[Array, "output_dimension generator_dimension"],
-]:
-    matrix, offset = normalize_affine_map_parameters(
-        matrix,
-        offset,
-        center.shape[0],
-        dtype=source_dtype,
-    )
-    center = center.astype(matrix.dtype)
-    generator_matrix = generator_matrix.astype(matrix.dtype)
-    return matrix @ center + offset, matrix @ generator_matrix
-
-
-def normalize_center_and_generator_matrix(
-    center: VectorLike,
-    generator_matrix: MatrixLike,
-) -> tuple[
-    Float[Array, "ambient_dimension"],
-    Float[Array, "ambient_dimension latent_dimension"],
-]:
-    center = as_float_array(center)
-    generator_matrix = as_float_array(generator_matrix)
-    require_vector("center", center)
-    require_matrix("generator_matrix", generator_matrix)
-    if generator_matrix.shape[0] != center.shape[0]:
-        raise ValueError(
-            "generator_matrix rows must match the center dimension, got "
-            f"{generator_matrix.shape} and {center.shape}"
-        )
-    dtype = jnp.result_type(center.dtype, generator_matrix.dtype)
-    return center.astype(dtype), generator_matrix.astype(dtype)
-
-
-def normalize_query_vector(
-    name: str,
-    value: VectorLike,
-    ambient_dimension: int,
-    *,
-    dtype: DTypeLike,
-) -> Float[Array, "ambient_dimension"]:
-    value = as_float_array(value)
-    require_vector_dimension(name, value, ambient_dimension)
-    dtype = jnp.result_type(dtype, value.dtype)
-    return value.astype(dtype)
-
-
-def normalize_tolerance(tolerance: ScalarLike, *, dtype: DTypeLike) -> Float[Array, ""]:
-    tolerance = as_float_array(tolerance)
-    require_scalar("tolerance", tolerance)
-    tolerance = eqx.error_if(
-        tolerance,
-        (tolerance < 0) | ~jnp.isfinite(tolerance),
-        "tolerance must be finite and nonnegative",
-    )
-    dtype = jnp.result_type(dtype, tolerance.dtype)
-    return tolerance.astype(dtype)

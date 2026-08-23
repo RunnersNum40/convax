@@ -7,7 +7,7 @@ import pytest
 from jaxtyping import ScalarLike
 
 from convax import AxisAlignedBounds, SupportResult
-from convax._types import VectorLike
+from convax._utils import VectorLike
 
 
 def test_support_result_normalizes_array_like_inputs() -> None:

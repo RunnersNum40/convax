@@ -4,13 +4,16 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax._arrays import as_float_array, require_matrix, require_vector
-from convax._types import MatrixLike, VectorLike
-from convax.sets._abstract import (
-    AbstractAffineMapSet,
+from convax._utils import (
+    MatrixLike,
+    VectorLike,
     _affine_map_center_and_generator_matrix,
+    as_float_array,
     normalize_center_and_generator_matrix,
+    require_matrix,
+    require_vector,
 )
+from convax.sets._abstract import AbstractAffineMapSet
 
 
 @final

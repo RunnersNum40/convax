@@ -18,7 +18,7 @@ from convax import (
     intersection,
     minkowski_sum,
 )
-from convax._types import IntegerVectorLike
+from convax._utils import IntegerVectorLike
 
 
 def translate_capability[SetT: AbstractTranslationSet](
