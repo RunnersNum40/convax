@@ -6,7 +6,10 @@ import pytest
 
 from convax import (
     AbstractAffineMapSet,
+    AbstractConvexHullSet,
     AbstractConvexSet,
+    AbstractIntersectionSet,
+    AbstractMinkowskiSumSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
@@ -25,6 +28,7 @@ from convax import (
 
 SOURCE_ROOT = Path(__file__).parents[1] / "src" / "convax"
 SOURCE_FILES = tuple(SOURCE_ROOT.rglob("*.py"))
+ALGEBRA_SOURCE = SOURCE_ROOT / "operations" / "_algebra.py"
 FINAL_CLASSES = (
     AffineImage,
     AxisAlignedBounds,
@@ -51,7 +55,10 @@ def is_jit_decorator(decorator: ast.expr) -> bool:
     "abstract_class",
     [
         AbstractAffineMapSet,
+        AbstractConvexHullSet,
         AbstractConvexSet,
+        AbstractIntersectionSet,
+        AbstractMinkowskiSumSet,
         AbstractNegationSet,
         AbstractPointContainmentSet,
         AbstractSupportSet,
@@ -94,3 +101,21 @@ def test_source_avoids_forbidden_python_constructs(source_file: Path) -> None:
     assert not forbidden_loops
     assert not super_calls
     assert not jit_decorators
+
+
+def test_algebra_dispatch_does_not_depend_on_concrete_representations() -> None:
+    syntax_tree = ast.parse(ALGEBRA_SOURCE.read_text(), filename=str(ALGEBRA_SOURCE))
+    imported_set_names = {
+        alias.name
+        for node in syntax_tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "convax.sets"
+        for alias in node.names
+    }
+    concrete_representations = {
+        "ConstrainedZonotope",
+        "Ellipsoid",
+        "HalfspacePolyhedron",
+        "VertexPolytope",
+        "Zonotope",
+    }
+    assert imported_set_names.isdisjoint(concrete_representations)

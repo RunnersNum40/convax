@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, assert_type, cast
 
 import equinox as eqx
 import jax
@@ -10,8 +10,11 @@ from convax import (
     AbstractNegationSet,
     AbstractTranslationSet,
     AffineImage,
+    ConstrainedZonotope,
+    ConvexHull,
     Ellipsoid,
     HalfspacePolyhedron,
+    MinkowskiSum,
     VertexPolytope,
     Zonotope,
     convex_hull,
@@ -160,10 +163,12 @@ def test_minkowski_sum_adds_support_results() -> None:
     zonotope = Zonotope([1, 0], jnp.eye(2))
     direction = jnp.array([1.0, 2.0])
 
-    summed_support = minkowski_sum(ellipsoid, zonotope).support(direction)
+    summed = minkowski_sum(ellipsoid, zonotope)
+    summed_support = summed.support(direction)
     left_support = ellipsoid.support(direction)
     right_support = zonotope.support(direction)
 
+    assert_type(summed, MinkowskiSum)
     assert jnp.allclose(summed_support.value, left_support.value + right_support.value)
     assert jnp.allclose(summed_support.point, left_support.point + right_support.point)
 
@@ -172,10 +177,14 @@ def test_convex_hull_selects_larger_support() -> None:
     left = VertexPolytope([[0, 0], [1, 0]])
     right = VertexPolytope([[0, 0], [3, 0]])
 
-    support = jax.jit(lambda hull: hull.support(jnp.array([1.0, 0.0])))(
-        convex_hull(left, right)
-    )
+    hull = convex_hull(left, right)
+    support = jax.jit(lambda hull: hull.support(jnp.array([1.0, 0.0])))(hull)
 
+    assert_type(hull, VertexPolytope)
+    assert isinstance(hull, VertexPolytope)
+    assert jnp.array_equal(
+        hull.vertices, jnp.concatenate((left.vertices, right.vertices))
+    )
     assert jnp.allclose(support.value, 3.0)
     assert jnp.allclose(support.point, jnp.array([3.0, 0.0]))
 
@@ -229,6 +238,7 @@ def test_composite_transformations_are_explicit_affine_images() -> None:
     right = Ellipsoid([1, 0], jnp.eye(2))
     hull = convex_hull(left, right)
 
+    assert_type(hull, ConvexHull)
     assert not isinstance(hull, AbstractAffineMapSet)
     assert not isinstance(hull, AbstractTranslationSet)
     assert not isinstance(hull, AbstractNegationSet)
@@ -240,12 +250,33 @@ def test_composite_transformations_are_explicit_affine_images() -> None:
 def test_operation_dimension_mismatches_fail_loudly() -> None:
     one_dimensional = Zonotope([0], jnp.ones((1, 1)))
     two_dimensional = Zonotope([0, 0], jnp.eye(2))
+    one_dimensional_polytope = VertexPolytope([[0]])
+    two_dimensional_polytope = VertexPolytope([[0, 0]])
 
     with pytest.raises(ValueError, match="dimensions must match"):
         minkowski_sum(one_dimensional, two_dimensional)
 
     with pytest.raises(ValueError, match="dimensions must match"):
         convex_hull(one_dimensional, two_dimensional)
+
+    with pytest.raises(ValueError, match="dimensions must match"):
+        convex_hull(one_dimensional_polytope, two_dimensional_polytope)
+
+
+def test_unsupported_operation_combinations_fail_loudly() -> None:
+    constrained_zonotope = ConstrainedZonotope(
+        [0], [[1]], jnp.empty((0, 1)), jnp.empty((0,))
+    )
+    halfspace_polyhedron = HalfspacePolyhedron([[1]], [1])
+
+    with pytest.raises(TypeError, match="convex hull is not implemented"):
+        cast(Any, convex_hull)(halfspace_polyhedron, halfspace_polyhedron)
+
+    with pytest.raises(TypeError, match="Minkowski sum is not implemented"):
+        cast(Any, minkowski_sum)(constrained_zonotope, halfspace_polyhedron)
+
+    with pytest.raises(TypeError, match="intersection is not implemented"):
+        cast(Any, intersection)(constrained_zonotope, halfspace_polyhedron)
 
 
 def test_composites_preserve_promoted_query_precision() -> None:

@@ -77,6 +77,30 @@ class AbstractAffineMapSet(AbstractTranslationSet, AbstractNegationSet):
         return self.affine_map(-jnp.eye(self.ambient_dimension, dtype=self.dtype))
 
 
+class AbstractMinkowskiSumSet(AbstractConvexSet):
+    """Representation closed under Minkowski addition."""
+
+    @abstractmethod
+    def minkowski_sum(self, other: "AbstractMinkowskiSumSet") -> Self:
+        """Return the Minkowski sum in its concrete type."""
+
+
+class AbstractIntersectionSet(AbstractConvexSet):
+    """Representation closed under intersection."""
+
+    @abstractmethod
+    def intersection(self, other: "AbstractIntersectionSet") -> Self:
+        """Return the intersection in its concrete type."""
+
+
+class AbstractConvexHullSet(AbstractConvexSet):
+    """Representation closed under convex hull."""
+
+    @abstractmethod
+    def convex_hull(self, other: "AbstractConvexHullSet") -> Self:
+        """Return the convex hull in its concrete type."""
+
+
 class AbstractSupportSet(AbstractConvexSet):
     """Interface for compact convex sets with a support function."""
 

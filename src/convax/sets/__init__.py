@@ -1,6 +1,9 @@
 from convax.sets._abstract import (
     AbstractAffineMapSet,
+    AbstractConvexHullSet,
     AbstractConvexSet,
+    AbstractIntersectionSet,
+    AbstractMinkowskiSumSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
@@ -23,7 +26,10 @@ from convax.sets._zonotope import Zonotope
 
 __all__ = [
     "AbstractAffineMapSet",
+    "AbstractConvexHullSet",
     "AbstractConvexSet",
+    "AbstractIntersectionSet",
+    "AbstractMinkowskiSumSet",
     "AbstractNegationSet",
     "AbstractPointContainmentSet",
     "AbstractSupportSet",

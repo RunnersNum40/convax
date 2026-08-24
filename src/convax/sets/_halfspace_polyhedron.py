@@ -15,6 +15,7 @@ from convax._utils import (
     require_vector_dimension,
 )
 from convax.sets._abstract import (
+    AbstractIntersectionSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractTranslationSet,
@@ -26,6 +27,7 @@ class HalfspacePolyhedron(
     AbstractTranslationSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
+    AbstractIntersectionSet,
 ):
     r"""Represents :math:`\{x \mid Ax \leq b, Ex = f\}`. The representation may
     describe an unbounded, lower-dimensional, or empty set.
@@ -160,6 +162,25 @@ class HalfspacePolyhedron(
             self.inequality_bounds,
             -self.equality_matrix,
             self.equality_values,
+        )
+
+    @override
+    def intersection(self, other: AbstractIntersectionSet) -> "HalfspacePolyhedron":
+        if not isinstance(other, HalfspacePolyhedron):
+            raise TypeError(
+                "intersection requires matching representations, got "
+                f"HalfspacePolyhedron and {type(other).__name__}"
+            )
+        if self.ambient_dimension != other.ambient_dimension:
+            raise ValueError(
+                "intersection dimensions must match, got "
+                f"{self.ambient_dimension} and {other.ambient_dimension}"
+            )
+        return HalfspacePolyhedron(
+            jnp.concatenate((self.inequality_matrix, other.inequality_matrix), axis=0),
+            jnp.concatenate((self.inequality_bounds, other.inequality_bounds), axis=0),
+            jnp.concatenate((self.equality_matrix, other.equality_matrix), axis=0),
+            jnp.concatenate((self.equality_values, other.equality_values), axis=0),
         )
 
     @override

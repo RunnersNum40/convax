@@ -14,13 +14,18 @@ from convax._utils import (
 )
 from convax.sets._abstract import (
     AbstractAffineMapSet,
+    AbstractConvexHullSet,
     AbstractSupportSet,
 )
 from convax.sets._results import SupportResult
 
 
 @final
-class VertexPolytope(AbstractAffineMapSet, AbstractSupportSet):
+class VertexPolytope(
+    AbstractAffineMapSet,
+    AbstractConvexHullSet,
+    AbstractSupportSet,
+):
     """Convex hull of an explicit nonempty vertex collection.
 
     Args:
@@ -57,6 +62,25 @@ class VertexPolytope(AbstractAffineMapSet, AbstractSupportSet):
             dtype=self.dtype,
         )
         return VertexPolytope(self.vertices.astype(matrix.dtype) @ matrix.T + offset)
+
+    @override
+    def convex_hull(self, other: AbstractConvexHullSet) -> "VertexPolytope":
+        if not isinstance(other, VertexPolytope):
+            raise TypeError(
+                "convex hull requires matching representations, got "
+                f"VertexPolytope and {type(other).__name__}"
+            )
+        if self.ambient_dimension != other.ambient_dimension:
+            raise ValueError(
+                "convex hull dimensions must match, got "
+                f"{self.ambient_dimension} and {other.ambient_dimension}"
+            )
+        dtype = jnp.result_type(self.dtype, other.dtype)
+        return VertexPolytope(
+            jnp.concatenate(
+                (self.vertices.astype(dtype), other.vertices.astype(dtype)), axis=0
+            )
+        )
 
     @override
     def support(self, direction: VectorLike) -> SupportResult:

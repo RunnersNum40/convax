@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, assert_type, cast
 
 import jax
 import jax.numpy as jnp
@@ -150,6 +150,7 @@ def test_minkowski_sum_builds_block_diagonal_constraints() -> None:
     eager = minkowski_sum(left, right)
     compiled = jax.jit(minkowski_sum)(left, right)
 
+    assert_type(eager, ConstrainedZonotope)
     assert jnp.array_equal(eager.center, jnp.array([-1.0]))
     assert jnp.array_equal(eager.generator_matrix, jnp.array([[2.0, 3.0, 4.0]]))
     assert jnp.array_equal(
@@ -199,6 +200,7 @@ def test_intersection_lifts_both_latent_vectors() -> None:
     eager = intersection(left, right)
     compiled = jax.jit(intersection)(left, right)
 
+    assert_type(eager, ConstrainedZonotope)
     assert jnp.array_equal(eager.center, jnp.zeros(1))
     assert jnp.array_equal(eager.generator_matrix, jnp.array([[1.0, 0.0]]))
     assert jnp.array_equal(eager.constraint_matrix, jnp.array([[1.0, -1.0]]))

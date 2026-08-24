@@ -2,6 +2,7 @@ from typing import final, override
 
 import jax.numpy as jnp
 from jax import Array
+from jax.scipy.linalg import block_diag as block_diagonal
 from jaxtyping import Float
 
 from convax._utils import (
@@ -13,11 +14,19 @@ from convax._utils import (
     require_matrix,
     require_vector,
 )
-from convax.sets._abstract import AbstractAffineMapSet
+from convax.sets._abstract import (
+    AbstractAffineMapSet,
+    AbstractIntersectionSet,
+    AbstractMinkowskiSumSet,
+)
 
 
 @final
-class ConstrainedZonotope(AbstractAffineMapSet):
+class ConstrainedZonotope(
+    AbstractAffineMapSet,
+    AbstractIntersectionSet,
+    AbstractMinkowskiSumSet,
+):
     r"""Equality-constrained affine image of the unit infinity-norm ball.
 
     Represents
@@ -101,4 +110,74 @@ class ConstrainedZonotope(AbstractAffineMapSet):
             generator_matrix,
             self.constraint_matrix,
             self.constraint_values,
+        )
+
+    @override
+    def minkowski_sum(self, other: AbstractMinkowskiSumSet) -> "ConstrainedZonotope":
+        if not isinstance(other, ConstrainedZonotope):
+            raise TypeError(
+                "Minkowski sum requires matching representations, got "
+                f"ConstrainedZonotope and {type(other).__name__}"
+            )
+        if self.ambient_dimension != other.ambient_dimension:
+            raise ValueError(
+                "Minkowski sum dimensions must match, got "
+                f"{self.ambient_dimension} and {other.ambient_dimension}"
+            )
+        dtype = jnp.result_type(self.dtype, other.dtype)
+        left_generators = self.generator_matrix.astype(dtype)
+        right_generators = other.generator_matrix.astype(dtype)
+        output_constraints = block_diagonal(
+            self.constraint_matrix.astype(dtype),
+            other.constraint_matrix.astype(dtype),
+        )
+        return ConstrainedZonotope(
+            self.center.astype(dtype) + other.center.astype(dtype),
+            jnp.concatenate((left_generators, right_generators), axis=1),
+            output_constraints,
+            jnp.concatenate(
+                (
+                    self.constraint_values.astype(dtype),
+                    other.constraint_values.astype(dtype),
+                )
+            ),
+        )
+
+    @override
+    def intersection(self, other: AbstractIntersectionSet) -> "ConstrainedZonotope":
+        if not isinstance(other, ConstrainedZonotope):
+            raise TypeError(
+                "intersection requires matching representations, got "
+                f"ConstrainedZonotope and {type(other).__name__}"
+            )
+        if self.ambient_dimension != other.ambient_dimension:
+            raise ValueError(
+                "intersection dimensions must match, got "
+                f"{self.ambient_dimension} and {other.ambient_dimension}"
+            )
+        dtype = jnp.result_type(self.dtype, other.dtype)
+        left_center = self.center.astype(dtype)
+        right_center = other.center.astype(dtype)
+        left_generators = self.generator_matrix.astype(dtype)
+        right_generators = other.generator_matrix.astype(dtype)
+        operand_constraints = block_diagonal(
+            self.constraint_matrix.astype(dtype),
+            other.constraint_matrix.astype(dtype),
+        )
+        matching_constraints = jnp.concatenate(
+            (left_generators, -right_generators), axis=1
+        )
+        return ConstrainedZonotope(
+            left_center,
+            jnp.concatenate(
+                (left_generators, jnp.zeros_like(right_generators)), axis=1
+            ),
+            jnp.concatenate((operand_constraints, matching_constraints), axis=0),
+            jnp.concatenate(
+                (
+                    self.constraint_values.astype(dtype),
+                    other.constraint_values.astype(dtype),
+                    right_center - left_center,
+                )
+            ),
         )

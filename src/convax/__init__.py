@@ -1,7 +1,10 @@
 from convax.operations import convex_hull, intersection, minkowski_sum
 from convax.sets import (
     AbstractAffineMapSet,
+    AbstractConvexHullSet,
     AbstractConvexSet,
+    AbstractIntersectionSet,
+    AbstractMinkowskiSumSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
@@ -20,7 +23,10 @@ from convax.sets import (
 
 __all__ = [
     "AbstractAffineMapSet",
+    "AbstractConvexHullSet",
     "AbstractConvexSet",
+    "AbstractIntersectionSet",
+    "AbstractMinkowskiSumSet",
     "AbstractNegationSet",
     "AbstractPointContainmentSet",
     "AbstractSupportSet",
