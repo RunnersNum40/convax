@@ -1,13 +1,12 @@
+from collections.abc import Sequence
 from typing import final, override
 
 import jax.numpy as jnp
 from jax import Array
 from jax.scipy.linalg import block_diag as block_diagonal
-from jaxtyping import Float
+from jaxtyping import ArrayLike, Float, Real
 
 from convax._utils import (
-    MatrixLike,
-    VectorLike,
     _affine_map_center_and_generator_matrix,
     as_float_array,
     normalize_center_and_generator_matrix,
@@ -51,10 +50,12 @@ class ConstrainedZonotope(
 
     def __init__(
         self,
-        center: VectorLike,
-        generator_matrix: MatrixLike,
-        constraint_matrix: MatrixLike,
-        constraint_values: VectorLike,
+        center: Real[ArrayLike, "ambient_dimension"] | Sequence[float | int],
+        generator_matrix: Real[ArrayLike, "ambient_dimension generator_count"]
+        | Sequence[Sequence[float | int]],
+        constraint_matrix: Real[ArrayLike, "constraint_count generator_count"]
+        | Sequence[Sequence[float | int]],
+        constraint_values: Real[ArrayLike, "constraint_count"] | Sequence[float | int],
     ) -> None:
         center, generator_matrix = normalize_center_and_generator_matrix(
             center, generator_matrix
@@ -95,9 +96,20 @@ class ConstrainedZonotope(
     @override
     def affine_map(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> "ConstrainedZonotope":
+        """Return the affine image as a constrained zonotope.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape
+                ``(output_dimension,)``. ``None`` selects a zero offset.
+        """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,
             self.generator_matrix,
@@ -114,6 +126,11 @@ class ConstrainedZonotope(
 
     @override
     def minkowski_sum(self, other: AbstractMinkowskiSumSet) -> "ConstrainedZonotope":
+        """Return the Minkowski sum as a constrained zonotope.
+
+        Args:
+            other: Constrained zonotope with the same ambient dimension.
+        """
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
                 "Minkowski sum requires matching representations, got "
@@ -145,6 +162,11 @@ class ConstrainedZonotope(
 
     @override
     def intersection(self, other: AbstractIntersectionSet) -> "ConstrainedZonotope":
+        """Return the intersection as a constrained zonotope.
+
+        Args:
+            other: Constrained zonotope with the same ambient dimension.
+        """
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
                 "intersection requires matching representations, got "

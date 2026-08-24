@@ -2,6 +2,7 @@ from typing import cast
 
 import jax.numpy as jnp
 import pytest
+from jaxtyping import TypeCheckError
 
 from convax import Ellipsoid, Zonotope
 from convax._utils import MatrixLike, VectorLike
@@ -43,16 +44,10 @@ def test_mixed_floating_dtypes_follow_result_type(
 def test_constructor_preserves_shape_validation_errors(
     set_type: CenterGeneratorSet,
 ) -> None:
-    with pytest.raises(
-        ValueError,
-        match=r"^center must be a vector, got shape \(1, 2\)$",
-    ):
+    with pytest.raises(TypeCheckError, match="parameter 'center'"):
         set_type(cast(VectorLike, [[1.0, 2.0]]), [[1.0], [2.0]])
 
-    with pytest.raises(
-        ValueError,
-        match=r"^generator_matrix must be a matrix, got shape \(3,\)$",
-    ):
+    with pytest.raises(TypeCheckError, match="parameter 'generator_matrix'"):
         set_type([1.0, 2.0], cast(MatrixLike, [1.0, 2.0, 3.0]))
 
     with pytest.raises(
@@ -69,27 +64,19 @@ def test_constructor_preserves_shape_validation_errors(
 def test_constructor_rejects_complex_inputs(
     set_type: CenterGeneratorSet,
 ) -> None:
-    message = "^Convax requires real-valued arrays$"
-
-    with pytest.raises(TypeError, match=message):
+    with pytest.raises(TypeCheckError, match="parameter 'center'"):
         set_type(jnp.array([1.0 + 1.0j]), [[1.0]])
 
-    with pytest.raises(TypeError, match=message):
+    with pytest.raises(TypeCheckError, match="parameter 'generator_matrix'"):
         set_type([1.0], jnp.array([[1.0 + 1.0j]]))
 
 
 @pytest.mark.parametrize("set_type", [Ellipsoid, Zonotope])
-def test_constructor_preserves_conversion_and_validation_order(
+def test_constructor_checks_parameter_types_in_signature_order(
     set_type: CenterGeneratorSet,
 ) -> None:
-    with pytest.raises(
-        TypeError,
-        match=r"^Convax requires real-valued arrays$",
-    ):
+    with pytest.raises(TypeCheckError, match="parameter 'center'"):
         set_type(cast(VectorLike, [[1.0]]), jnp.array([[1.0 + 1.0j]]))
 
-    with pytest.raises(
-        ValueError,
-        match=r"^center must be a vector, got shape \(1, 1\)$",
-    ):
+    with pytest.raises(TypeCheckError, match="parameter 'center'"):
         set_type(cast(VectorLike, [[1.0]]), cast(MatrixLike, [1.0]))

@@ -4,6 +4,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
+from jaxtyping import TypeCheckError
 
 from convax import (
     AbstractAffineMapSet,
@@ -88,7 +89,7 @@ def test_affine_preimage_defaults_zero_offset_and_rejects_dimension_mismatch() -
 
     assert jnp.array_equal(preimage.inequality_matrix, jnp.array([[2.0]]))
     assert jnp.array_equal(preimage.inequality_bounds, polyhedron.inequality_bounds)
-    with pytest.raises(ValueError, match="matrix rows must match"):
+    with pytest.raises(TypeCheckError, match="parameter 'matrix'"):
         polyhedron.affine_preimage(jnp.eye(3))
 
 
@@ -132,9 +133,9 @@ def test_coordinate_projection_matrix_matches_float16_set_dtype() -> None:
 def test_coordinate_projection_rejects_invalid_rank_and_dtype() -> None:
     zonotope = Zonotope([1, 2], jnp.eye(2))
 
-    with pytest.raises(ValueError, match="coordinates must be a vector"):
+    with pytest.raises(TypeCheckError, match="parameter 'coordinates'"):
         zonotope.project_coordinates(cast(IntegerVectorLike, [[0]]))
-    with pytest.raises(TypeError, match="coordinates must contain integers"):
+    with pytest.raises(TypeCheckError, match="parameter 'coordinates'"):
         zonotope.project_coordinates(cast(IntegerVectorLike, [0.0]))
 
 

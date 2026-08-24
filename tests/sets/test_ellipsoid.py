@@ -2,6 +2,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 from jax.typing import DTypeLike
+from jaxtyping import TypeCheckError
 
 from convax import Ellipsoid
 
@@ -203,8 +204,8 @@ def test_support_direction_gradient_with_low_precision(dtype: DTypeLike) -> None
 
 
 def test_constructor_rejects_incompatible_shapes() -> None:
-    with pytest.raises(ValueError, match="rows must match"):
+    with pytest.raises(TypeCheckError, match="parameter 'generator_matrix'"):
         Ellipsoid(jnp.zeros(2), jnp.zeros((3, 1)))
 
-    with pytest.raises(ValueError, match="must be a vector"):
+    with pytest.raises(TypeCheckError, match="parameter 'center'"):
         Ellipsoid(jnp.zeros((1, 2)), jnp.zeros((2, 1)))

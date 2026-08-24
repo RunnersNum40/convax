@@ -2,6 +2,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
+from jaxtyping import TypeCheckError
 
 from convax import (
     AbstractPointContainmentSet,
@@ -26,7 +27,7 @@ def test_containment_accepts_explicit_scalar_tolerance(
 def test_containment_rejects_vector_tolerance(
     containment_set: AbstractPointContainmentSet,
 ) -> None:
-    with pytest.raises(ValueError, match="tolerance must be a scalar"):
+    with pytest.raises(TypeCheckError, match="parameter 'tolerance'"):
         containment_set.contains([0], tolerance=jnp.array([1e-3]))
 
 

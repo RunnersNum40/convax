@@ -1,12 +1,11 @@
+from collections.abc import Sequence
 from typing import final, override
 
 import jax.numpy as jnp
 from jax import Array
-from jaxtyping import Bool, Float, ScalarLike
+from jaxtyping import ArrayLike, Bool, Float, Real, ScalarLike
 
 from convax._utils import (
-    MatrixLike,
-    VectorLike,
     as_float_array,
     normalize_query_vector,
     normalize_tolerance,
@@ -48,10 +47,15 @@ class HalfspacePolyhedron(
 
     def __init__(
         self,
-        inequality_matrix: MatrixLike,
-        inequality_bounds: VectorLike,
-        equality_matrix: MatrixLike | None = None,
-        equality_values: VectorLike | None = None,
+        inequality_matrix: Real[ArrayLike, "inequality_count ambient_dimension"]
+        | Sequence[Sequence[float | int]],
+        inequality_bounds: Real[ArrayLike, "inequality_count"] | Sequence[float | int],
+        equality_matrix: Real[ArrayLike, "equality_count ambient_dimension"]
+        | Sequence[Sequence[float | int]]
+        | None = None,
+        equality_values: Real[ArrayLike, "equality_count"]
+        | Sequence[float | int]
+        | None = None,
     ) -> None:
         inequality_matrix = as_float_array(inequality_matrix)
         inequality_bounds = as_float_array(inequality_bounds)
@@ -108,10 +112,20 @@ class HalfspacePolyhedron(
 
     def affine_preimage(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "{self.ambient_dimension} input_dimension"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "{self.ambient_dimension}"]
+        | Sequence[float | int]
+        | None = None,
     ) -> "HalfspacePolyhedron":
-        r"""Return :math:`\{x \mid Ax + b \in P\}`."""
+        r"""Return :math:`\{x \mid Ax + b \in P\}`.
+
+        Args:
+            matrix: Linear map with shape
+                ``(ambient_dimension, input_dimension)``.
+            offset: Optional vector with shape ``(ambient_dimension,)`` added
+                before testing membership. ``None`` selects a zero offset.
+        """
         matrix = as_float_array(matrix)
         require_matrix("matrix", matrix)
         if matrix.shape[0] != self.ambient_dimension:
@@ -139,7 +153,15 @@ class HalfspacePolyhedron(
         )
 
     @override
-    def translate(self, offset: VectorLike) -> "HalfspacePolyhedron":
+    def translate(
+        self,
+        offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> "HalfspacePolyhedron":
+        """Return the translated halfspace polyhedron.
+
+        Args:
+            offset: Translation vector with shape ``(ambient_dimension,)``.
+        """
         offset = as_float_array(offset)
         require_vector_dimension("offset", offset, self.ambient_dimension)
         dtype = jnp.result_type(self.dtype, offset.dtype)
@@ -166,6 +188,11 @@ class HalfspacePolyhedron(
 
     @override
     def intersection(self, other: AbstractIntersectionSet) -> "HalfspacePolyhedron":
+        """Return the intersection as a halfspace polyhedron.
+
+        Args:
+            other: Halfspace polyhedron with the same ambient dimension.
+        """
         if not isinstance(other, HalfspacePolyhedron):
             raise TypeError(
                 "intersection requires matching representations, got "
@@ -186,10 +213,16 @@ class HalfspacePolyhedron(
     @override
     def contains(
         self,
-        point: VectorLike,
+        point: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
         *,
         tolerance: ScalarLike = 1e-6,
     ) -> Bool[Array, ""]:
+        """Return whether a point satisfies every constraint.
+
+        Args:
+            point: Query point with shape ``(ambient_dimension,)``.
+            tolerance: Finite, nonnegative scalar feasibility tolerance.
+        """
         point = normalize_query_vector(
             "point", point, self.ambient_dimension, dtype=self.dtype
         )

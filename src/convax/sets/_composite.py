@@ -1,13 +1,12 @@
+from collections.abc import Sequence
 from typing import final, override
 
 import jax
 import jax.numpy as jnp
 from jax import Array
-from jaxtyping import Float
+from jaxtyping import ArrayLike, Float, Real
 
 from convax._utils import (
-    MatrixLike,
-    VectorLike,
     normalize_affine_map_parameters,
     normalize_query_vector,
 )
@@ -20,7 +19,15 @@ from convax.sets._results import SupportResult
 
 @final
 class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
-    r"""Affine image :math:`\{Ax + b \mid x \in X\}` of a support set."""
+    r"""Support-set affine image :math:`\{Ax + b \mid x \in X\}`.
+
+    Args:
+        convex_set: Support-capable source set.
+        matrix: Linear-map matrix with shape
+            ``(output_dimension, convex_set.ambient_dimension)``.
+        offset: Optional translation vector with shape ``(output_dimension,)``.
+            ``None`` selects a zero offset.
+    """
 
     convex_set: AbstractSupportSet
     matrix: Float[Array, "output_dimension input_dimension"]
@@ -29,8 +36,11 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
     def __init__(
         self,
         convex_set: AbstractSupportSet,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {convex_set.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> None:
         matrix, offset = normalize_affine_map_parameters(
             matrix,
@@ -53,9 +63,20 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
     @override
     def affine_map(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> "AffineImage":
+        """Return the affine image in the same composite type.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape
+                ``(output_dimension,)``. ``None`` selects a zero offset.
+        """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
             offset,
@@ -69,7 +90,15 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
         )
 
     @override
-    def support(self, direction: VectorLike) -> SupportResult:
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing point.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )
@@ -82,7 +111,12 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
 
 @final
 class MinkowskiSum(AbstractSupportSet):
-    r"""Minkowski sum :math:`\{x + y \mid x \in X, y \in Y\}`."""
+    r"""Minkowski sum :math:`\{x + y \mid x \in X, y \in Y\}`.
+
+    Args:
+        left_set: First support-capable operand.
+        right_set: Second support-capable operand with the same ambient dimension.
+    """
 
     left_set: AbstractSupportSet
     right_set: AbstractSupportSet
@@ -107,7 +141,15 @@ class MinkowskiSum(AbstractSupportSet):
         return jnp.result_type(self.left_set.dtype, self.right_set.dtype)
 
     @override
-    def support(self, direction: VectorLike) -> SupportResult:
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing point.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )
@@ -121,7 +163,12 @@ class MinkowskiSum(AbstractSupportSet):
 
 @final
 class ConvexHull(AbstractSupportSet):
-    """Convex hull of two compact convex sets."""
+    """Convex hull of two compact convex sets.
+
+    Args:
+        left_set: First support-capable operand.
+        right_set: Second support-capable operand with the same ambient dimension.
+    """
 
     left_set: AbstractSupportSet
     right_set: AbstractSupportSet
@@ -146,7 +193,15 @@ class ConvexHull(AbstractSupportSet):
         return jnp.result_type(self.left_set.dtype, self.right_set.dtype)
 
     @override
-    def support(self, direction: VectorLike) -> SupportResult:
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing point.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )

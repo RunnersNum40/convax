@@ -1,13 +1,12 @@
+from collections.abc import Sequence
 from typing import final, override
 
 import jax
 import jax.numpy as jnp
 from jax import Array
-from jaxtyping import Bool, Float, ScalarLike
+from jaxtyping import ArrayLike, Bool, Float, Real, ScalarLike
 
 from convax._utils import (
-    MatrixLike,
-    VectorLike,
     _affine_map_center_and_generator_matrix,
     _scaled_l2_norm,
     normalize_center_and_generator_matrix,
@@ -44,8 +43,9 @@ class Ellipsoid(
 
     def __init__(
         self,
-        center: VectorLike,
-        generator_matrix: MatrixLike,
+        center: Real[ArrayLike, "ambient_dimension"] | Sequence[float | int],
+        generator_matrix: Real[ArrayLike, "ambient_dimension latent_dimension"]
+        | Sequence[Sequence[float | int]],
     ) -> None:
         self.center, self.generator_matrix = normalize_center_and_generator_matrix(
             center, generator_matrix
@@ -62,9 +62,20 @@ class Ellipsoid(
     @override
     def affine_map(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> "Ellipsoid":
+        """Return the affine image as an ellipsoid.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape
+                ``(output_dimension,)``. ``None`` selects a zero offset.
+        """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,
             self.generator_matrix,
@@ -75,7 +86,15 @@ class Ellipsoid(
         return Ellipsoid(center, generator_matrix)
 
     @override
-    def support(self, direction: VectorLike) -> SupportResult:
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing point.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )
@@ -102,10 +121,16 @@ class Ellipsoid(
     @override
     def contains(
         self,
-        point: VectorLike,
+        point: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
         *,
         tolerance: ScalarLike = 1e-6,
     ) -> Bool[Array, ""]:
+        """Return whether a point belongs to the ellipsoid.
+
+        Args:
+            point: Query point with shape ``(ambient_dimension,)``.
+            tolerance: Finite, nonnegative scalar feasibility tolerance.
+        """
         point = normalize_query_vector(
             "point", point, self.ambient_dimension, dtype=self.dtype
         )

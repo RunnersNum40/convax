@@ -26,12 +26,14 @@ def convex_hull(
 def convex_hull(
     left_set: AbstractConvexSet, right_set: AbstractConvexSet
 ) -> AbstractConvexSet:
-    """Return the convex hull, the smallest convex set containing both operands.
+    """Return the smallest convex set containing both operands.
 
-    Matching operands whose concrete representation is closed under convex hull
-    retain that representation. Otherwise, two support-capable operands produce
-    a lazy ``ConvexHull`` whose support queries use the operands without building
-    an explicit hull representation.
+    Matching representations closed under convex hull are retained; otherwise, support-capable
+    operands produce a lazy ``ConvexHull`` without building an explicit hull.
+
+    Args:
+        left_set: First convex-set operand.
+        right_set: Second convex-set operand with the same ambient dimension.
 
     Raises:
         TypeError: If neither representation-preserving construction nor the
@@ -58,11 +60,15 @@ def convex_hull(
 def intersection[SetT: AbstractIntersectionSet](
     left_set: SetT, right_set: SetT
 ) -> SetT:
-    """Return the intersection of two sets with the same concrete representation.
+    """Return the intersection of two sets.
 
-    The representation must be closed under intersection. No generic
-    support-function fallback exists because intersection cannot generally be
-    evaluated from the operands' support functions.
+    The representation must be intersection-closed; support functions do not
+    generally determine intersections.
+
+    Args:
+        left_set: First intersection-closed convex-set operand.
+        right_set: Second operand with the same concrete type and ambient
+            dimension.
 
     Raises:
         TypeError: If the sets have different concrete types.
@@ -93,10 +99,12 @@ def minkowski_sum(
 ) -> AbstractConvexSet:
     """Return the Minkowski sum, ``{x + y | x in left_set, y in right_set}``.
 
-    Matching operands whose concrete representation is closed under Minkowski
-    addition retain that representation. Otherwise, two support-capable
-    operands produce a lazy ``MinkowskiSum`` whose support queries use the
-    operands without building an explicit sum representation.
+    Matching representations closed under Minkowski addition are retained; otherwise,
+    support-capable operands produce a lazy ``MinkowskiSum``.
+
+    Args:
+        left_set: First convex-set operand.
+        right_set: Second convex-set operand with the same ambient dimension.
 
     Raises:
         TypeError: If neither representation-preserving construction nor the

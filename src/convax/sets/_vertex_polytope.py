@@ -1,12 +1,11 @@
+from collections.abc import Sequence
 from typing import final, override
 
 import jax.numpy as jnp
 from jax import Array
-from jaxtyping import Float
+from jaxtyping import ArrayLike, Float, Real
 
 from convax._utils import (
-    MatrixLike,
-    VectorLike,
     as_float_array,
     normalize_affine_map_parameters,
     normalize_query_vector,
@@ -34,7 +33,11 @@ class VertexPolytope(
 
     vertices: Float[Array, "vertex_count ambient_dimension"]
 
-    def __init__(self, vertices: MatrixLike) -> None:
+    def __init__(
+        self,
+        vertices: Real[ArrayLike, "vertex_count ambient_dimension"]
+        | Sequence[Sequence[float | int]],
+    ) -> None:
         vertices = as_float_array(vertices)
         require_matrix("vertices", vertices)
         if vertices.shape[0] == 0:
@@ -52,9 +55,20 @@ class VertexPolytope(
     @override
     def affine_map(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> "VertexPolytope":
+        """Return the affine image as a vertex polytope.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape
+                ``(output_dimension,)``. ``None`` selects a zero offset.
+        """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
             offset,
@@ -65,6 +79,11 @@ class VertexPolytope(
 
     @override
     def convex_hull(self, other: AbstractConvexHullSet) -> "VertexPolytope":
+        """Return the convex hull as a vertex polytope.
+
+        Args:
+            other: Vertex polytope with the same ambient dimension.
+        """
         if not isinstance(other, VertexPolytope):
             raise TypeError(
                 "convex hull requires matching representations, got "
@@ -83,7 +102,15 @@ class VertexPolytope(
         )
 
     @override
-    def support(self, direction: VectorLike) -> SupportResult:
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing vertex.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )

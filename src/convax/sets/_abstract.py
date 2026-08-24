@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections.abc import Sequence
 from typing import Self, override
 
 import equinox as eqx
@@ -6,9 +7,8 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 from jax.typing import DTypeLike
-from jaxtyping import Bool, Float, ScalarLike
+from jaxtyping import ArrayLike, Bool, Float, Integer, Real, ScalarLike
 
-from convax._utils import IntegerVectorLike, MatrixLike, VectorLike
 from convax.sets._results import AxisAlignedBounds, SupportResult
 
 
@@ -21,8 +21,15 @@ class AbstractTranslationSet(AbstractConvexSet):
     """Interface for translation-closed representations."""
 
     @abstractmethod
-    def translate(self, offset: VectorLike) -> Self:
-        """Return the translated set in the same concrete type."""
+    def translate(
+        self,
+        offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> Self:
+        """Return the translated set in the same concrete type.
+
+        Args:
+            offset: Translation vector with shape ``(ambient_dimension,)``.
+        """
 
 
 class AbstractNegationSet(AbstractConvexSet):
@@ -39,13 +46,31 @@ class AbstractAffineMapSet(AbstractTranslationSet, AbstractNegationSet):
     @abstractmethod
     def affine_map(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> Self:
-        """Return the affine image in the same concrete type."""
+        """Return the affine image in the same concrete type.
 
-    def project_coordinates(self, coordinates: IntegerVectorLike) -> Self:
-        """Project onto an ordered collection of coordinate axes."""
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape
+                ``(output_dimension,)``. ``None`` selects a zero offset.
+        """
+
+    def project_coordinates(
+        self,
+        coordinates: Integer[ArrayLike, "output_dimension"] | Sequence[int],
+    ) -> Self:
+        """Project onto an ordered collection of coordinate axes.
+
+        Args:
+            coordinates: One-dimensional integer sequence of coordinate indices.
+                Its order determines the output coordinate order.
+        """
         coordinates = jnp.asarray(coordinates)
         if coordinates.ndim != 1:
             raise ValueError(
@@ -66,7 +91,15 @@ class AbstractAffineMapSet(AbstractTranslationSet, AbstractNegationSet):
         return self.affine_map(projection_matrix)
 
     @override
-    def translate(self, offset: VectorLike) -> Self:
+    def translate(
+        self,
+        offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> Self:
+        """Return the translated set.
+
+        Args:
+            offset: Translation vector with shape ``(ambient_dimension,)``.
+        """
         return self.affine_map(
             jnp.eye(self.ambient_dimension, dtype=self.dtype),
             offset,
@@ -82,7 +115,11 @@ class AbstractMinkowskiSumSet(AbstractConvexSet):
 
     @abstractmethod
     def minkowski_sum(self, other: "AbstractMinkowskiSumSet") -> Self:
-        """Return the Minkowski sum in its concrete type."""
+        """Return the Minkowski sum in its concrete type.
+
+        Args:
+            other: Set of the same concrete representation and ambient dimension.
+        """
 
 
 class AbstractIntersectionSet(AbstractConvexSet):
@@ -90,7 +127,11 @@ class AbstractIntersectionSet(AbstractConvexSet):
 
     @abstractmethod
     def intersection(self, other: "AbstractIntersectionSet") -> Self:
-        """Return the intersection in its concrete type."""
+        """Return the intersection in its concrete type.
+
+        Args:
+            other: Set of the same concrete representation and ambient dimension.
+        """
 
 
 class AbstractConvexHullSet(AbstractConvexSet):
@@ -98,20 +139,47 @@ class AbstractConvexHullSet(AbstractConvexSet):
 
     @abstractmethod
     def convex_hull(self, other: "AbstractConvexHullSet") -> Self:
-        """Return the convex hull in its concrete type."""
+        """Return the convex hull in its concrete type.
+
+        Args:
+            other: Set of the same concrete representation and ambient dimension.
+        """
 
 
 class AbstractSupportSet(AbstractConvexSet):
     """Interface for compact convex sets with a support function."""
 
     @abstractmethod
-    def support(self, direction: VectorLike) -> SupportResult:
-        """Return the support value and a maximizing point."""
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing point.
 
-    def support_value(self, direction: VectorLike) -> Float[Array, ""]:
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
+
+    def support_value(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> Float[Array, ""]:
+        """Return the support value.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         return self.support(direction).value
 
-    def support_point(self, direction: VectorLike) -> Float[Array, "ambient_dimension"]:
+    def support_point(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> Float[Array, "{self.ambient_dimension}"]:
+        """Return a maximizing support point.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         return self.support(direction).point
 
     def axis_aligned_bounds(self) -> AxisAlignedBounds:
@@ -126,7 +194,7 @@ class AbstractPointContainmentSet(AbstractConvexSet):
     @abstractmethod
     def contains(
         self,
-        point: VectorLike,
+        point: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
         *,
         tolerance: ScalarLike = 1e-6,
     ) -> Bool[Array, ""]:

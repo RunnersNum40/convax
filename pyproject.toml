@@ -28,6 +28,7 @@ dev = [
   "pytest-cov==7.1.0",
   "ruff==0.16.3",
   "ty==0.0.72",
+  "typeguard>=2.13.3,<3",
 ]
 docs = ["mkdocstrings-python==2.0.7", "zensical==0.0.56"]
 
@@ -39,6 +40,7 @@ python-version = "3.13"
 
 [tool.pytest]
 addopts = [
+  "--jaxtyping-packages=convax,typeguard.typechecked",
   "--cov=convax",
   "--cov-report=term-missing",
   "--import-mode=importlib",

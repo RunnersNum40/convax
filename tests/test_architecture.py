@@ -1,5 +1,6 @@
 import ast
 import inspect
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -26,9 +27,14 @@ from convax import (
     Zonotope,
 )
 
-SOURCE_ROOT = Path(__file__).parents[1] / "src" / "convax"
+PROJECT_ROOT = Path(__file__).parents[1]
+SOURCE_ROOT = PROJECT_ROOT / "src" / "convax"
 SOURCE_FILES = tuple(SOURCE_ROOT.rglob("*.py"))
 ALGEBRA_SOURCE = SOURCE_ROOT / "operations" / "_algebra.py"
+PUBLIC_API_SOURCE_FILES = (
+    ALGEBRA_SOURCE,
+    *tuple((SOURCE_ROOT / "sets").glob("_*.py")),
+)
 FINAL_CLASSES = (
     AffineImage,
     AxisAlignedBounds,
@@ -49,6 +55,40 @@ def is_jit_decorator(decorator: ast.expr) -> bool:
     return (isinstance(decorator, ast.Name) and decorator.id == "jit") or (
         isinstance(decorator, ast.Attribute) and decorator.attr in {"jit", "filter_jit"}
     )
+
+
+def has_decorator(function: ast.FunctionDef, name: str) -> bool:
+    for decorator in function.decorator_list:
+        if isinstance(decorator, ast.Call):
+            decorator = decorator.func
+        if isinstance(decorator, ast.Name) and decorator.id == name:
+            return True
+    return False
+
+
+def user_parameter_names(function: ast.FunctionDef) -> tuple[str, ...]:
+    positional_parameters = (*function.args.posonlyargs, *function.args.args)
+    if positional_parameters and positional_parameters[0].arg in {"self", "cls"}:
+        positional_parameters = positional_parameters[1:]
+    return tuple(
+        parameter.arg
+        for parameter in (*positional_parameters, *function.args.kwonlyargs)
+    )
+
+
+def missing_args_documentation(
+    docstring: str | None, parameter_names: tuple[str, ...]
+) -> tuple[str, ...]:
+    if not parameter_names:
+        return ()
+    if docstring is None or "Args:" not in docstring.splitlines():
+        return parameter_names
+    documented_parameters = {
+        line.strip().split(":", maxsplit=1)[0]
+        for line in docstring.splitlines()
+        if line.startswith("    ") and ":" in line
+    }
+    return tuple(name for name in parameter_names if name not in documented_parameters)
 
 
 @pytest.mark.parametrize(
@@ -119,3 +159,61 @@ def test_algebra_dispatch_does_not_depend_on_concrete_representations() -> None:
         "Zonotope",
     }
     assert imported_set_names.isdisjoint(concrete_representations)
+
+
+def test_runtime_typechecking_is_ci_only() -> None:
+    configuration = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
+    project_dependencies = configuration["project"]["dependencies"]
+    development_dependencies = configuration["dependency-groups"]["dev"]
+    pytest_arguments = configuration["tool"]["pytest"]["addopts"]
+
+    assert not any(
+        dependency.startswith("typeguard") for dependency in project_dependencies
+    )
+    assert any(
+        dependency.startswith("typeguard") for dependency in development_dependencies
+    )
+    assert "--jaxtyping-packages=convax,typeguard.typechecked" in pytest_arguments
+
+
+@pytest.mark.parametrize(
+    "source_file", PUBLIC_API_SOURCE_FILES, ids=lambda path: path.name
+)
+def test_public_callables_document_arguments(source_file: Path) -> None:
+    syntax_tree = ast.parse(source_file.read_text(), filename=str(source_file))
+    missing_documentation: list[str] = []
+
+    for definition in syntax_tree.body:
+        if isinstance(definition, ast.FunctionDef):
+            if definition.name.startswith("_") or has_decorator(definition, "overload"):
+                continue
+            missing_parameters = missing_args_documentation(
+                ast.get_docstring(definition), user_parameter_names(definition)
+            )
+            if missing_parameters:
+                missing_documentation.append(
+                    f"{definition.name}: {', '.join(missing_parameters)}"
+                )
+            continue
+
+        if not isinstance(definition, ast.ClassDef) or definition.name.startswith("_"):
+            continue
+
+        for method in definition.body:
+            if not isinstance(method, ast.FunctionDef):
+                continue
+            if method.name == "__init__":
+                docstring = ast.get_docstring(definition)
+            elif method.name.startswith("_"):
+                continue
+            else:
+                docstring = ast.get_docstring(method)
+            missing_parameters = missing_args_documentation(
+                docstring, user_parameter_names(method)
+            )
+            if missing_parameters:
+                missing_documentation.append(
+                    f"{definition.name}.{method.name}: {', '.join(missing_parameters)}"
+                )
+
+    assert not missing_documentation

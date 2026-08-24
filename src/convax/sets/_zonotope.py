@@ -1,12 +1,11 @@
+from collections.abc import Sequence
 from typing import final, override
 
 import jax.numpy as jnp
 from jax import Array
-from jaxtyping import Float
+from jaxtyping import ArrayLike, Float, Real
 
 from convax._utils import (
-    MatrixLike,
-    VectorLike,
     _affine_map_center_and_generator_matrix,
     normalize_center_and_generator_matrix,
     normalize_query_vector,
@@ -35,8 +34,9 @@ class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
 
     def __init__(
         self,
-        center: VectorLike,
-        generator_matrix: MatrixLike,
+        center: Real[ArrayLike, "ambient_dimension"] | Sequence[float | int],
+        generator_matrix: Real[ArrayLike, "ambient_dimension generator_count"]
+        | Sequence[Sequence[float | int]],
     ) -> None:
         self.center, self.generator_matrix = normalize_center_and_generator_matrix(
             center, generator_matrix
@@ -53,9 +53,20 @@ class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
     @override
     def affine_map(
         self,
-        matrix: MatrixLike,
-        offset: VectorLike | None = None,
+        matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "output_dimension"]
+        | Sequence[float | int]
+        | None = None,
     ) -> "Zonotope":
+        """Return the affine image as a zonotope.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape
+                ``(output_dimension,)``. ``None`` selects a zero offset.
+        """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,
             self.generator_matrix,
@@ -66,7 +77,15 @@ class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
         return Zonotope(center, generator_matrix)
 
     @override
-    def support(self, direction: VectorLike) -> SupportResult:
+    def support(
+        self,
+        direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
+    ) -> SupportResult:
+        """Return the support value and a maximizing point.
+
+        Args:
+            direction: Support-query vector with shape ``(ambient_dimension,)``.
+        """
         direction = normalize_query_vector(
             "direction", direction, self.ambient_dimension, dtype=self.dtype
         )

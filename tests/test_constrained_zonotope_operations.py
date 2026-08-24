@@ -3,6 +3,7 @@ from typing import Any, assert_type, cast
 import jax
 import jax.numpy as jnp
 import pytest
+from jaxtyping import TypeCheckError
 
 from convax import (
     ConstrainedZonotope,
@@ -374,5 +375,5 @@ def test_algebra_rejects_dimension_mismatches_and_mixed_representations() -> Non
         intersection(one_dimensional, two_dimensional)
     with pytest.raises(TypeError, match="not implemented"):
         cast(Any, minkowski_sum)(one_dimensional, zonotope)
-    with pytest.raises(TypeError, match="not implemented"):
+    with pytest.raises(TypeCheckError, match="parameter 'right_set'"):
         cast(Any, intersection)(one_dimensional, zonotope)

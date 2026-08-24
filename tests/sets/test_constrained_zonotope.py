@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 import pytest
+from jaxtyping import TypeCheckError
 
 from convax import ConstrainedZonotope
 
@@ -48,56 +49,62 @@ def test_constructor_accepts_infeasible_and_redundant_constraints() -> None:
 
 
 @pytest.mark.parametrize(
-    ("center", "generator_matrix", "constraint_matrix", "constraint_values", "match"),
+    (
+        "center",
+        "generator_matrix",
+        "constraint_matrix",
+        "constraint_values",
+        "parameter",
+    ),
     [
         (
             jnp.zeros((1, 1)),
             jnp.zeros((1, 1)),
             jnp.zeros((1, 1)),
             jnp.zeros(1),
-            "center must be a vector",
+            "center",
         ),
         (
             jnp.zeros(1),
             jnp.zeros(1),
             jnp.zeros((1, 1)),
             jnp.zeros(1),
-            "generator_matrix must be a matrix",
+            "generator_matrix",
         ),
         (
             jnp.zeros(2),
             jnp.zeros((1, 1)),
             jnp.zeros((1, 1)),
             jnp.zeros(1),
-            "generator_matrix rows must match",
+            "generator_matrix",
         ),
         (
             jnp.zeros(1),
             jnp.zeros((1, 1)),
             jnp.zeros(1),
             jnp.zeros(1),
-            "constraint_matrix must be a matrix",
+            "constraint_matrix",
         ),
         (
             jnp.zeros(1),
             jnp.zeros((1, 1)),
             jnp.zeros((1, 1)),
             jnp.zeros((1, 1)),
-            "constraint_values must be a vector",
+            "constraint_values",
         ),
         (
             jnp.zeros(1),
             jnp.zeros((1, 2)),
             jnp.zeros((1, 1)),
             jnp.zeros(1),
-            "constraint_matrix columns must match",
+            "constraint_matrix",
         ),
         (
             jnp.zeros(1),
             jnp.zeros((1, 1)),
             jnp.zeros((2, 1)),
             jnp.zeros(1),
-            "constraint_matrix rows must match",
+            "constraint_values",
         ),
     ],
 )
@@ -106,9 +113,9 @@ def test_constructor_rejects_invalid_shapes(
     generator_matrix: jax.Array,
     constraint_matrix: jax.Array,
     constraint_values: jax.Array,
-    match: str,
+    parameter: str,
 ) -> None:
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeCheckError, match=f"parameter '{parameter}'"):
         ConstrainedZonotope(
             center,
             generator_matrix,
@@ -123,13 +130,13 @@ def test_constructor_rejects_complex_fields() -> None:
     complex_vector = jnp.ones(1, dtype=jnp.complex64)
     complex_matrix = jnp.ones((1, 1), dtype=jnp.complex64)
 
-    with pytest.raises(TypeError, match="real-valued"):
+    with pytest.raises(TypeCheckError, match="parameter 'center'"):
         ConstrainedZonotope(complex_vector, real_matrix, real_matrix, real_vector)
-    with pytest.raises(TypeError, match="real-valued"):
+    with pytest.raises(TypeCheckError, match="parameter 'generator_matrix'"):
         ConstrainedZonotope(real_vector, complex_matrix, real_matrix, real_vector)
-    with pytest.raises(TypeError, match="real-valued"):
+    with pytest.raises(TypeCheckError, match="parameter 'constraint_matrix'"):
         ConstrainedZonotope(real_vector, real_matrix, complex_matrix, real_vector)
-    with pytest.raises(TypeError, match="real-valued"):
+    with pytest.raises(TypeCheckError, match="parameter 'constraint_values'"):
         ConstrainedZonotope(real_vector, real_matrix, real_matrix, complex_vector)
 
 

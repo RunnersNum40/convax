@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from jaxtyping import ScalarLike
+from jaxtyping import ScalarLike, TypeCheckError
 
 from convax import AxisAlignedBounds, SupportResult
 from convax._utils import VectorLike
@@ -48,20 +48,20 @@ def test_result_construction_is_jittable() -> None:
 
 
 def test_invalid_result_shape_fails_during_jit_tracing() -> None:
-    with pytest.raises(ValueError, match="value must be a scalar"):
+    with pytest.raises(TypeCheckError, match="parameter 'value'"):
         jax.jit(SupportResult)(jnp.ones(1), jnp.ones(2))
 
 
 def test_support_result_rejects_invalid_shapes() -> None:
-    with pytest.raises(ValueError, match="value must be a scalar"):
+    with pytest.raises(TypeCheckError, match="parameter 'value'"):
         SupportResult(cast(ScalarLike, [1]), [1, 2])
 
-    with pytest.raises(ValueError, match="point must be a vector"):
+    with pytest.raises(TypeCheckError, match="parameter 'point'"):
         SupportResult(1, cast(VectorLike, [[1, 2]]))
 
 
 def test_axis_aligned_bounds_reject_invalid_shapes() -> None:
-    with pytest.raises(ValueError, match="lower must be a vector"):
+    with pytest.raises(TypeCheckError, match="parameter 'lower'"):
         AxisAlignedBounds(cast(VectorLike, [[-1, -2]]), [3, 4])
 
     with pytest.raises(ValueError, match="matching shapes"):
@@ -72,5 +72,5 @@ def test_result_constructors_reject_complex_inputs() -> None:
     with pytest.raises(TypeError, match="requires real-valued arrays"):
         SupportResult(jnp.array(1.0 + 1.0j), [1])
 
-    with pytest.raises(TypeError, match="requires real-valued arrays"):
+    with pytest.raises(TypeCheckError, match="parameter 'lower'"):
         AxisAlignedBounds(jnp.array([-1.0 + 1.0j]), [1])

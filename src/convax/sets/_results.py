@@ -1,11 +1,16 @@
+from collections.abc import Sequence
 from typing import final
 
 import equinox as eqx
 import jax.numpy as jnp
 from jax import Array
-from jaxtyping import Float, ScalarLike
+from jaxtyping import ArrayLike, Float, Real, ScalarLike
 
-from convax._utils import VectorLike, as_float_array, require_scalar, require_vector
+from convax._utils import (
+    as_float_array,
+    require_scalar,
+    require_vector,
+)
 
 
 @final
@@ -24,7 +29,11 @@ class SupportResult(eqx.Module):
     value: Float[Array, ""]
     point: Float[Array, "ambient_dimension"]
 
-    def __init__(self, value: ScalarLike, point: VectorLike) -> None:
+    def __init__(
+        self,
+        value: ScalarLike,
+        point: Real[ArrayLike, "ambient_dimension"] | Sequence[float | int],
+    ) -> None:
         value = as_float_array(value)
         point = as_float_array(point)
         require_scalar("value", value)
@@ -50,7 +59,11 @@ class AxisAlignedBounds(eqx.Module):
     lower: Float[Array, "ambient_dimension"]
     upper: Float[Array, "ambient_dimension"]
 
-    def __init__(self, lower: VectorLike, upper: VectorLike) -> None:
+    def __init__(
+        self,
+        lower: Real[ArrayLike, "ambient_dimension"] | Sequence[float | int],
+        upper: Real[ArrayLike, "ambient_dimension"] | Sequence[float | int],
+    ) -> None:
         lower = as_float_array(lower)
         upper = as_float_array(upper)
         require_vector("lower", lower)

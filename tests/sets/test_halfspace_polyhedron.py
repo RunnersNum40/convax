@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 import pytest
+from jaxtyping import TypeCheckError
 
 from convax import HalfspacePolyhedron
 
@@ -47,5 +48,5 @@ def test_constructor_rejects_incomplete_equalities() -> None:
 
 
 def test_constructor_rejects_incompatible_shapes() -> None:
-    with pytest.raises(ValueError, match="rows must match"):
+    with pytest.raises(TypeCheckError, match="parameter 'inequality_bounds'"):
         HalfspacePolyhedron(jnp.eye(2), jnp.ones(3))

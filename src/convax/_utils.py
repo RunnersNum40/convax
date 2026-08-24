@@ -5,14 +5,18 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 from jax.typing import DTypeLike
-from jaxtyping import ArrayLike, Float, ScalarLike
+from jaxtyping import ArrayLike, Float, Integer, Real, ScalarLike
 
-type VectorLike = ArrayLike | Sequence[float | int]
-type MatrixLike = ArrayLike | Sequence[Sequence[float | int]]
-type IntegerVectorLike = ArrayLike | Sequence[int]
+type VectorSequence = Sequence[float | int]
+type MatrixSequence = Sequence[VectorSequence]
+type VectorLike = Real[ArrayLike, "_"] | VectorSequence
+type MatrixLike = Real[ArrayLike, "_ _"] | MatrixSequence
+type IntegerVectorLike = Integer[ArrayLike, "_"] | Sequence[int]
 
 
-def as_float_array(value: VectorLike | MatrixLike) -> Float[Array, "..."]:
+def as_float_array(
+    value: ScalarLike | VectorLike | MatrixLike,
+) -> Float[Array, "..."]:
     value = jnp.asarray(value)
     if jnp.issubdtype(value.dtype, jnp.complexfloating):
         raise TypeError("Convax requires real-valued arrays")
