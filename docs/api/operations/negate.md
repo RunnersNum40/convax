@@ -1,3 +1,1 @@
-# negate
-
 ::: convax.negate

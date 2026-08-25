@@ -1,3 +1,1 @@
-# Ellipsoid
-
 ::: convax.Ellipsoid

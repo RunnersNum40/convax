@@ -1,3 +1,1 @@
-# ConstrainedZonotope
-
 ::: convax.ConstrainedZonotope

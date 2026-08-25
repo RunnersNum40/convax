@@ -1,5 +1,3 @@
-# Abstract Sets
-
 ::: convax.AbstractConvexSet
 
 ::: convax.AbstractAffineMapSet
