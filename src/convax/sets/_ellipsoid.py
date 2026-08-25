@@ -29,7 +29,7 @@ class Ellipsoid(
 ):
     r"""Affine image of a Euclidean unit ball.
 
-    Represents :math:`\{c + Gu \mid \lVert u \rVert_2 \leq 1\}`. The generator
+    Represents \(\{c + Gu \mid \lVert u \rVert_2 \leq 1\}\). The generator
     matrix may be rectangular or rank deficient.
 
     Args:
@@ -74,7 +74,7 @@ class Ellipsoid(
             matrix: Linear-map matrix with shape
                 ``(output_dimension, ambient_dimension)``.
             offset: Optional translation vector with shape
-                ``(output_dimension,)``. ``None`` selects a zero offset.
+                ``(output_dimension,)``; ``None`` selects zero.
         """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,

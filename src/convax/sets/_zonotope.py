@@ -21,7 +21,7 @@ from convax.sets._results import SupportResult
 class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
     r"""Affine image of a unit infinity-norm ball.
 
-    Represents :math:`\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1\}`.
+    Represents \(\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1\}\).
 
     Args:
         center: Zonotope center with shape ``(ambient_dimension,)``.
@@ -65,7 +65,7 @@ class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
             matrix: Linear-map matrix with shape
                 ``(output_dimension, ambient_dimension)``.
             offset: Optional translation vector with shape
-                ``(output_dimension,)``. ``None`` selects a zero offset.
+                ``(output_dimension,)``; ``None`` selects zero.
         """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,

@@ -29,7 +29,7 @@ class ConstrainedZonotope(
     r"""Equality-constrained affine image of the unit infinity-norm ball.
 
     Represents
-    :math:`\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1, A\xi = b\}`.
+    \(\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1, A\xi = b\}\).
     Constraints may be redundant or infeasible; the conventional ``center`` is
     an affine offset that need not belong to the represented set.
 
@@ -108,7 +108,7 @@ class ConstrainedZonotope(
             matrix: Linear-map matrix with shape
                 ``(output_dimension, ambient_dimension)``.
             offset: Optional translation vector with shape
-                ``(output_dimension,)``. ``None`` selects a zero offset.
+                ``(output_dimension,)``; ``None`` selects zero.
         """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,

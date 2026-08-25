@@ -1,0 +1,3 @@
+# HalfspacePolyhedron
+
+::: convax.HalfspacePolyhedron

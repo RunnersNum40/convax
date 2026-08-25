@@ -28,7 +28,7 @@ class HalfspacePolyhedron(
     AbstractPointContainmentSet,
     AbstractIntersectionSet,
 ):
-    r"""Represents :math:`\{x \mid Ax \leq b, Ex = f\}`. The representation may
+    r"""Represents \(\{x \mid Ax \leq b, Ex = f\}\). The representation may
     describe an unbounded, lower-dimensional, or empty set.
 
     Args:
@@ -118,13 +118,13 @@ class HalfspacePolyhedron(
         | Sequence[float | int]
         | None = None,
     ) -> "HalfspacePolyhedron":
-        r"""Return :math:`\{x \mid Ax + b \in P\}`.
+        r"""Return \(\{x \mid Ax + b \in P\}\).
 
         Args:
             matrix: Linear map with shape
                 ``(ambient_dimension, input_dimension)``.
             offset: Optional vector with shape ``(ambient_dimension,)`` added
-                before testing membership. ``None`` selects a zero offset.
+                before membership testing; ``None`` selects zero.
         """
         matrix = as_float_array(matrix)
         require_matrix("matrix", matrix)

@@ -19,14 +19,14 @@ from convax.sets._results import SupportResult
 
 @final
 class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
-    r"""Support-set affine image :math:`\{Ax + b \mid x \in X\}`.
+    r"""Support-set affine image \(\{Ax + b \mid x \in X\}\).
 
     Args:
         convex_set: Support-capable source set.
         matrix: Linear-map matrix with shape
             ``(output_dimension, convex_set.ambient_dimension)``.
-        offset: Optional translation vector with shape ``(output_dimension,)``.
-            ``None`` selects a zero offset.
+        offset: Optional translation vector with shape ``(output_dimension,)``;
+            ``None`` selects zero.
     """
 
     convex_set: AbstractSupportSet
@@ -75,7 +75,7 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
             matrix: Linear-map matrix with shape
                 ``(output_dimension, ambient_dimension)``.
             offset: Optional translation vector with shape
-                ``(output_dimension,)``. ``None`` selects a zero offset.
+                ``(output_dimension,)``; ``None`` selects zero.
         """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
@@ -111,7 +111,7 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
 
 @final
 class MinkowskiSum(AbstractSupportSet):
-    r"""Minkowski sum :math:`\{x + y \mid x \in X, y \in Y\}`.
+    r"""Minkowski sum \(\{x + y \mid x \in X, y \in Y\}\).
 
     Args:
         left_set: First support-capable operand.
