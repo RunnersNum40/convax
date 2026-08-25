@@ -14,6 +14,7 @@ from convax._utils import (
     require_vector_dimension,
 )
 from convax.sets._abstract import (
+    AbstractAffinePreimageSet,
     AbstractIntersectionSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
@@ -23,6 +24,7 @@ from convax.sets._abstract import (
 
 @final
 class HalfspacePolyhedron(
+    AbstractAffinePreimageSet,
     AbstractTranslationSet,
     AbstractNegationSet,
     AbstractPointContainmentSet,
@@ -110,7 +112,8 @@ class HalfspacePolyhedron(
     def dtype(self):
         return self.inequality_matrix.dtype
 
-    def affine_preimage(
+    @override
+    def _affine_preimage(
         self,
         matrix: Real[ArrayLike, "{self.ambient_dimension} input_dimension"]
         | Sequence[Sequence[float | int]],
@@ -153,15 +156,10 @@ class HalfspacePolyhedron(
         )
 
     @override
-    def translate(
+    def _translate(
         self,
         offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> "HalfspacePolyhedron":
-        """Return the translated halfspace polyhedron.
-
-        Args:
-            offset: Translation vector with shape ``(ambient_dimension,)``.
-        """
         offset = as_float_array(offset)
         require_vector_dimension("offset", offset, self.ambient_dimension)
         dtype = jnp.result_type(self.dtype, offset.dtype)
@@ -178,7 +176,7 @@ class HalfspacePolyhedron(
         )
 
     @override
-    def negate(self) -> "HalfspacePolyhedron":
+    def _negate(self) -> "HalfspacePolyhedron":
         return HalfspacePolyhedron(
             -self.inequality_matrix,
             self.inequality_bounds,
@@ -187,12 +185,7 @@ class HalfspacePolyhedron(
         )
 
     @override
-    def intersection(self, other: AbstractIntersectionSet) -> "HalfspacePolyhedron":
-        """Return the intersection as a halfspace polyhedron.
-
-        Args:
-            other: Halfspace polyhedron with the same ambient dimension.
-        """
+    def _intersection(self, other: AbstractIntersectionSet) -> "HalfspacePolyhedron":
         if not isinstance(other, HalfspacePolyhedron):
             raise TypeError(
                 "intersection requires matching representations, got "

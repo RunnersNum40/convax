@@ -8,6 +8,7 @@ from convax import (
     ConstrainedZonotope,
     HalfspacePolyhedron,
     Zonotope,
+    affine_map,
 )
 
 
@@ -35,17 +36,17 @@ def test_array_constructor_axes_are_checked() -> None:
         AxisAlignedBounds(jnp.zeros(2), jnp.zeros(3))
 
 
-def test_method_axes_are_checked() -> None:
+def test_public_callable_axes_are_checked() -> None:
     zonotope = Zonotope(jnp.zeros(2), jnp.eye(2))
 
     with pytest.raises(TypeCheckError, match="parameter 'direction'"):
         zonotope.support(jnp.zeros(3))
 
     with pytest.raises(TypeCheckError, match="parameter 'matrix'"):
-        zonotope.affine_map(jnp.zeros((2, 3)))
+        affine_map(zonotope, jnp.zeros((2, 3)))
 
     with pytest.raises(TypeCheckError, match="parameter 'offset'"):
-        zonotope.affine_map(jnp.zeros((3, 2)), jnp.zeros(2))
+        affine_map(zonotope, jnp.zeros((3, 2)), jnp.zeros(2))
 
 
 def test_sequence_inputs_retain_manual_validation() -> None:

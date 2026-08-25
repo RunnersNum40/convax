@@ -16,7 +16,10 @@ c(p) = \beta - h_{X(p)}(n).
 
     Support functions can be nonsmooth at maximizing-point ties or active-set changes.
 
-Positive clearance means the complete footprint satisfies the halfspace. The full-rank ellipsoid and nonzero obstacle normal make this support query smooth for the demonstrated pose.
+Positive clearance means the complete footprint satisfies the halfspace. The
+full-rank ellipsoid and nonzero obstacle normal make this query smooth at the
+demonstrated pose. `affine_map` places the footprint while retaining its
+ellipsoid representation.
 
 <!-- fmt:off -->
 ```python title="examples/differentiable_geometry.py"

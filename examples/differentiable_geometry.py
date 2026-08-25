@@ -3,7 +3,7 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax import Ellipsoid
+from convax import Ellipsoid, affine_map
 
 
 def collision_clearance(
@@ -15,7 +15,7 @@ def collision_clearance(
     cosine = jnp.cos(pose[2])
     sine = jnp.sin(pose[2])
     rotation_matrix = jnp.array([[cosine, -sine], [sine, cosine]])
-    world_footprint = local_footprint.affine_map(rotation_matrix, pose[:2])
+    world_footprint = affine_map(local_footprint, rotation_matrix, pose[:2])
     return obstacle_bound - world_footprint.support_value(obstacle_normal)
 
 

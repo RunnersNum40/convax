@@ -15,7 +15,8 @@ h_W(a_1) & \cdots & h_W(a_m)
 \end{bmatrix}^\mathsf{T}.
 \]
 
-The example computes all margins with `jax.vmap`, tightens output limits, and uses an affine preimage to express them in state coordinates:
+The example computes all margins with `jax.vmap`, tightens output limits, and
+uses the `affine_preimage` free operation to express them in state coordinates:
 
 The robust preimage is intersected with independent state limits, and a vectorized compiled query classifies candidate states. This construction handles inequality limits; a nontrivial additive disturbance generally cannot preserve an output equality for every realization, so the example rejects equality constraints.
 

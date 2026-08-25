@@ -2,12 +2,15 @@ import jax
 import jax.numpy as jnp
 
 from convax import (
-    AffineImage,
     Ellipsoid,
     HalfspacePolyhedron,
+    affine_map,
+    affine_preimage,
     convex_hull,
     intersection,
     minkowski_sum,
+    negate,
+    translate,
 )
 
 
@@ -20,7 +23,7 @@ def test_composed_pipeline_compiles_as_one_region() -> None:
 
     def pipeline(left_set: Ellipsoid, right_set: Ellipsoid):
         combined = convex_hull(left_set, minkowski_sum(left_set, right_set))
-        return AffineImage(combined, matrix, offset).support(direction)
+        return affine_map(combined, matrix, offset).support(direction)
 
     eager_result = pipeline(left, right)
     compiled_result = jax.jit(pipeline)(left, right)
@@ -50,7 +53,7 @@ def test_grad_flows_through_composite_parameters() -> None:
 
     def loss(offset: jax.Array) -> jax.Array:
         ellipsoid = Ellipsoid([0, 0], jnp.eye(2))
-        return ellipsoid.affine_map(jnp.eye(2), offset).support_value(direction)
+        return affine_map(ellipsoid, jnp.eye(2), offset).support_value(direction)
 
     gradient = jax.jit(jax.grad(loss))(jnp.zeros(2))
 
@@ -63,16 +66,10 @@ def test_exact_halfspace_operations_compile() -> None:
     matrix = jnp.array([[2.0, 0.0], [0.0, 0.5]])
     offset = jnp.array([0.5, -0.5])
 
-    preimage = jax.jit(
-        lambda convex_set, affine_matrix, affine_offset: convex_set.affine_preimage(
-            affine_matrix, affine_offset
-        )
-    )(left, matrix, offset)
+    preimage = jax.jit(affine_preimage)(left, matrix, offset)
     combined = jax.jit(intersection)(left, right)
-    translated = jax.jit(
-        lambda convex_set, translation: convex_set.translate(translation)
-    )(left, offset)
-    reflected = jax.jit(lambda convex_set: convex_set.negate())(left)
+    translated = jax.jit(translate)(left, offset)
+    reflected = jax.jit(negate)(left)
 
     assert jnp.allclose(preimage.inequality_matrix, left.inequality_matrix @ matrix)
     assert combined.inequality_matrix.shape == (2, 2)

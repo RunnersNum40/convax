@@ -7,7 +7,7 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 from jax.typing import DTypeLike
-from jaxtyping import ArrayLike, Bool, Float, Integer, Real, ScalarLike
+from jaxtyping import ArrayLike, Bool, Float, Real, ScalarLike
 
 from convax.sets._results import AxisAlignedBounds, SupportResult
 
@@ -18,33 +18,23 @@ class AbstractConvexSet(eqx.Module):
 
 
 class AbstractTranslationSet(AbstractConvexSet):
-    """Interface for translation-closed representations."""
-
     @abstractmethod
-    def translate(
+    def _translate(
         self,
         offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> Self:
-        """Return the translated set in the same concrete type.
-
-        Args:
-            offset: Translation vector with shape ``(ambient_dimension,)``.
-        """
+        """Return the translated set in the concrete type."""
 
 
 class AbstractNegationSet(AbstractConvexSet):
-    """Interface for negation-closed representations."""
-
     @abstractmethod
-    def negate(self) -> Self:
-        """Return the negated set in the same concrete type."""
+    def _negate(self) -> Self:
+        """Return the negated set in the concrete type."""
 
 
 class AbstractAffineMapSet(AbstractTranslationSet, AbstractNegationSet):
-    """Interface for representations closed under arbitrary affine maps."""
-
     @abstractmethod
-    def affine_map(
+    def _affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -52,98 +42,52 @@ class AbstractAffineMapSet(AbstractTranslationSet, AbstractNegationSet):
         | Sequence[float | int]
         | None = None,
     ) -> Self:
-        """Return the affine image in the same concrete type.
-
-        Args:
-            matrix: Linear-map matrix with shape
-                ``(output_dimension, ambient_dimension)``.
-            offset: Optional translation vector with shape
-                ``(output_dimension,)``. ``None`` selects a zero offset.
-        """
-
-    def project_coordinates(
-        self,
-        coordinates: Integer[ArrayLike, "output_dimension"] | Sequence[int],
-    ) -> Self:
-        """Project onto an ordered collection of coordinate axes.
-
-        Args:
-            coordinates: One-dimensional integer sequence of coordinate indices.
-                Its order determines the output coordinate order.
-        """
-        coordinates = jnp.asarray(coordinates)
-        if coordinates.ndim != 1:
-            raise ValueError(
-                f"coordinates must be a vector, got shape {coordinates.shape}"
-            )
-        if not jnp.issubdtype(coordinates.dtype, jnp.integer):
-            raise TypeError("coordinates must contain integers")
-        coordinates = eqx.error_if(
-            coordinates,
-            jnp.any((coordinates < 0) | (coordinates >= self.ambient_dimension)),
-            "coordinates must lie within the set's ambient dimension",
-        )
-        projection_matrix = jax.nn.one_hot(
-            coordinates,
-            self.ambient_dimension,
-            dtype=self.dtype,
-        )
-        return self.affine_map(projection_matrix)
+        """Return the affine image in the concrete type."""
 
     @override
-    def translate(
+    def _translate(
         self,
         offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> Self:
-        """Return the translated set.
-
-        Args:
-            offset: Translation vector with shape ``(ambient_dimension,)``.
-        """
-        return self.affine_map(
+        return self._affine_map(
             jnp.eye(self.ambient_dimension, dtype=self.dtype),
             offset,
         )
 
     @override
-    def negate(self) -> Self:
-        return self.affine_map(-jnp.eye(self.ambient_dimension, dtype=self.dtype))
+    def _negate(self) -> Self:
+        return self._affine_map(-jnp.eye(self.ambient_dimension, dtype=self.dtype))
+
+
+class AbstractAffinePreimageSet(AbstractConvexSet):
+    @abstractmethod
+    def _affine_preimage(
+        self,
+        matrix: Real[ArrayLike, "{self.ambient_dimension} input_dimension"]
+        | Sequence[Sequence[float | int]],
+        offset: Real[ArrayLike, "{self.ambient_dimension}"]
+        | Sequence[float | int]
+        | None = None,
+    ) -> Self:
+        """Return the affine preimage in the concrete type."""
 
 
 class AbstractMinkowskiSumSet(AbstractConvexSet):
-    """Representation closed under Minkowski addition."""
-
     @abstractmethod
-    def minkowski_sum(self, other: "AbstractMinkowskiSumSet") -> Self:
-        """Return the Minkowski sum in its concrete type.
-
-        Args:
-            other: Set of the same concrete representation and ambient dimension.
-        """
+    def _minkowski_sum(self, other: "AbstractMinkowskiSumSet") -> Self:
+        """Return the Minkowski sum in its concrete type."""
 
 
 class AbstractIntersectionSet(AbstractConvexSet):
-    """Representation closed under intersection."""
-
     @abstractmethod
-    def intersection(self, other: "AbstractIntersectionSet") -> Self:
-        """Return the intersection in its concrete type.
-
-        Args:
-            other: Set of the same concrete representation and ambient dimension.
-        """
+    def _intersection(self, other: "AbstractIntersectionSet") -> Self:
+        """Return the intersection in its concrete type."""
 
 
 class AbstractConvexHullSet(AbstractConvexSet):
-    """Representation closed under convex hull."""
-
     @abstractmethod
-    def convex_hull(self, other: "AbstractConvexHullSet") -> Self:
-        """Return the convex hull in its concrete type.
-
-        Args:
-            other: Set of the same concrete representation and ambient dimension.
-        """
+    def _convex_hull(self, other: "AbstractConvexHullSet") -> Self:
+        """Return the convex hull in its concrete type."""
 
 
 class AbstractSupportSet(AbstractConvexSet):
@@ -183,7 +127,7 @@ class AbstractSupportSet(AbstractConvexSet):
         return self.support(direction).point
 
     def axis_aligned_bounds(self) -> AxisAlignedBounds:
-        """Return tight axis-aligned bounds."""
+        """Return tight bounds for each coordinate."""
         coordinate_directions = jnp.eye(self.ambient_dimension, dtype=self.dtype)
         upper = jax.vmap(self.support_value)(coordinate_directions)
         lower = -jax.vmap(self.support_value)(-coordinate_directions)

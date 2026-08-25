@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import pytest
 from jaxtyping import TypeCheckError
 
-from convax import Zonotope
+from convax import Zonotope, affine_map
 
 
 def test_support_matches_generator_formula() -> None:
@@ -43,7 +43,7 @@ def test_affine_map_preserves_zonotope_representation() -> None:
     matrix = jnp.array([[1.0, 2.0]])
     offset = jnp.array([0.5])
 
-    image = zonotope.affine_map(matrix, offset)
+    image = affine_map(zonotope, matrix, offset)
 
     assert isinstance(image, Zonotope)
     assert jnp.array_equal(image.center, matrix @ zonotope.center + offset)
@@ -59,10 +59,8 @@ def test_affine_map_promotes_mixed_dtypes() -> None:
     expected_center = matrix @ center.astype(jnp.float32) + offset.astype(jnp.float32)
     expected_generator_matrix = matrix @ generator_matrix.astype(jnp.float32)
 
-    eager_image = zonotope.affine_map(matrix, offset)
-    compiled_image = jax.jit(lambda convex_set: convex_set.affine_map(matrix, offset))(
-        zonotope
-    )
+    eager_image = affine_map(zonotope, matrix, offset)
+    compiled_image = jax.jit(affine_map)(zonotope, matrix, offset)
 
     for image in (eager_image, compiled_image):
         assert image.center.dtype == jnp.float32

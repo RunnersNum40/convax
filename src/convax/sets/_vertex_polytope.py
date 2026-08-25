@@ -53,7 +53,7 @@ class VertexPolytope(
         return self.vertices.dtype
 
     @override
-    def affine_map(
+    def _affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -61,14 +61,6 @@ class VertexPolytope(
         | Sequence[float | int]
         | None = None,
     ) -> "VertexPolytope":
-        """Return the affine image as a vertex polytope.
-
-        Args:
-            matrix: Linear-map matrix with shape
-                ``(output_dimension, ambient_dimension)``.
-            offset: Optional translation vector with shape
-                ``(output_dimension,)``. ``None`` selects a zero offset.
-        """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
             offset,
@@ -78,12 +70,7 @@ class VertexPolytope(
         return VertexPolytope(self.vertices.astype(matrix.dtype) @ matrix.T + offset)
 
     @override
-    def convex_hull(self, other: AbstractConvexHullSet) -> "VertexPolytope":
-        """Return the convex hull as a vertex polytope.
-
-        Args:
-            other: Vertex polytope with the same ambient dimension.
-        """
+    def _convex_hull(self, other: AbstractConvexHullSet) -> "VertexPolytope":
         if not isinstance(other, VertexPolytope):
             raise TypeError(
                 "convex hull requires matching representations, got "

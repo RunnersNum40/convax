@@ -1,0 +1,3 @@
+# intersection
+
+::: convax.intersection

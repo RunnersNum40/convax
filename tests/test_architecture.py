@@ -5,8 +5,11 @@ from pathlib import Path
 
 import pytest
 
+import convax
+import convax.operations
 from convax import (
     AbstractAffineMapSet,
+    AbstractAffinePreimageSet,
     AbstractConvexHullSet,
     AbstractConvexSet,
     AbstractIntersectionSet,
@@ -31,8 +34,10 @@ PROJECT_ROOT = Path(__file__).parents[1]
 SOURCE_ROOT = PROJECT_ROOT / "src" / "convax"
 SOURCE_FILES = tuple(SOURCE_ROOT.rglob("*.py"))
 ALGEBRA_SOURCE = SOURCE_ROOT / "operations" / "_algebra.py"
+TRANSFORMATIONS_SOURCE = SOURCE_ROOT / "operations" / "_transformations.py"
+OPERATION_SOURCES = (ALGEBRA_SOURCE, TRANSFORMATIONS_SOURCE)
 PUBLIC_API_SOURCE_FILES = (
-    ALGEBRA_SOURCE,
+    *OPERATION_SOURCES,
     *tuple((SOURCE_ROOT / "sets").glob("_*.py")),
 )
 FINAL_CLASSES = (
@@ -47,6 +52,26 @@ FINAL_CLASSES = (
     VertexPolytope,
     Zonotope,
 )
+FINAL_SET_CLASSES = (
+    AffineImage,
+    ConstrainedZonotope,
+    ConvexHull,
+    Ellipsoid,
+    HalfspacePolyhedron,
+    MinkowskiSum,
+    VertexPolytope,
+    Zonotope,
+)
+SET_PRODUCING_OPERATIONS = {
+    "affine_map",
+    "affine_preimage",
+    "convex_hull",
+    "intersection",
+    "minkowski_sum",
+    "negate",
+    "project_coordinates",
+    "translate",
+}
 
 
 def is_jit_decorator(decorator: ast.expr) -> bool:
@@ -95,6 +120,7 @@ def missing_args_documentation(
     "abstract_class",
     [
         AbstractAffineMapSet,
+        AbstractAffinePreimageSet,
         AbstractConvexHullSet,
         AbstractConvexSet,
         AbstractIntersectionSet,
@@ -143,8 +169,15 @@ def test_source_avoids_forbidden_python_constructs(source_file: Path) -> None:
     assert not jit_decorators
 
 
-def test_algebra_dispatch_does_not_depend_on_concrete_representations() -> None:
-    syntax_tree = ast.parse(ALGEBRA_SOURCE.read_text(), filename=str(ALGEBRA_SOURCE))
+@pytest.mark.parametrize(
+    "operation_source", OPERATION_SOURCES, ids=lambda path: path.name
+)
+def test_operation_dispatch_does_not_depend_on_concrete_representations(
+    operation_source: Path,
+) -> None:
+    syntax_tree = ast.parse(
+        operation_source.read_text(), filename=str(operation_source)
+    )
     imported_set_names = {
         alias.name
         for node in syntax_tree.body
@@ -159,6 +192,15 @@ def test_algebra_dispatch_does_not_depend_on_concrete_representations() -> None:
         "Zonotope",
     }
     assert imported_set_names.isdisjoint(concrete_representations)
+
+
+def test_set_producing_operations_are_only_free_functions() -> None:
+    for concrete_class in FINAL_SET_CLASSES:
+        for operation_name in SET_PRODUCING_OPERATIONS:
+            assert not hasattr(concrete_class, operation_name)
+
+    assert set(convax.__all__) >= SET_PRODUCING_OPERATIONS
+    assert set(convax.operations.__all__) >= SET_PRODUCING_OPERATIONS
 
 
 def test_runtime_typechecking_is_ci_only() -> None:

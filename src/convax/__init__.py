@@ -1,6 +1,16 @@
-from convax.operations import convex_hull, intersection, minkowski_sum
+from convax.operations import (
+    affine_map,
+    affine_preimage,
+    convex_hull,
+    intersection,
+    minkowski_sum,
+    negate,
+    project_coordinates,
+    translate,
+)
 from convax.sets import (
     AbstractAffineMapSet,
+    AbstractAffinePreimageSet,
     AbstractConvexHullSet,
     AbstractConvexSet,
     AbstractIntersectionSet,
@@ -23,6 +33,7 @@ from convax.sets import (
 
 __all__ = [
     "AbstractAffineMapSet",
+    "AbstractAffinePreimageSet",
     "AbstractConvexHullSet",
     "AbstractConvexSet",
     "AbstractIntersectionSet",
@@ -41,7 +52,12 @@ __all__ = [
     "SupportResult",
     "VertexPolytope",
     "Zonotope",
+    "affine_map",
+    "affine_preimage",
     "convex_hull",
     "intersection",
     "minkowski_sum",
+    "negate",
+    "project_coordinates",
+    "translate",
 ]

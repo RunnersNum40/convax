@@ -61,7 +61,7 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
         return self.matrix.dtype
 
     @override
-    def affine_map(
+    def _affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -69,14 +69,6 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
         | Sequence[float | int]
         | None = None,
     ) -> "AffineImage":
-        """Return the affine image in the same composite type.
-
-        Args:
-            matrix: Linear-map matrix with shape
-                ``(output_dimension, ambient_dimension)``.
-            offset: Optional translation vector with shape
-                ``(output_dimension,)``; ``None`` selects zero.
-        """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
             offset,

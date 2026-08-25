@@ -4,7 +4,7 @@ import pytest
 from jax.typing import DTypeLike
 from jaxtyping import TypeCheckError
 
-from convax import Ellipsoid
+from convax import Ellipsoid, affine_map
 
 
 def test_support_matches_closed_form() -> None:
@@ -144,12 +144,8 @@ def test_affine_map_preserves_ellipsoid_representation() -> None:
     matrix = jnp.array([[1.0, 2.0]])
     offset = jnp.array([0.5])
 
-    eager = ellipsoid.affine_map(matrix, offset)
-    compiled = jax.jit(
-        lambda convex_set, affine_matrix, affine_offset: convex_set.affine_map(
-            affine_matrix, affine_offset
-        )
-    )(ellipsoid, matrix, offset)
+    eager = affine_map(ellipsoid, matrix, offset)
+    compiled = jax.jit(affine_map)(ellipsoid, matrix, offset)
 
     assert isinstance(eager, Ellipsoid)
     assert jnp.array_equal(eager.center, matrix @ ellipsoid.center + offset)

@@ -4,6 +4,8 @@
 
 ::: convax.AbstractAffineMapSet
 
+::: convax.AbstractAffinePreimageSet
+
 ::: convax.AbstractTranslationSet
 
 ::: convax.AbstractNegationSet

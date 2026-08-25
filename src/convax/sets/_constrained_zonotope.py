@@ -94,7 +94,7 @@ class ConstrainedZonotope(
         return self.center.dtype
 
     @override
-    def affine_map(
+    def _affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -102,14 +102,6 @@ class ConstrainedZonotope(
         | Sequence[float | int]
         | None = None,
     ) -> "ConstrainedZonotope":
-        """Return the affine image as a constrained zonotope.
-
-        Args:
-            matrix: Linear-map matrix with shape
-                ``(output_dimension, ambient_dimension)``.
-            offset: Optional translation vector with shape
-                ``(output_dimension,)``; ``None`` selects zero.
-        """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,
             self.generator_matrix,
@@ -125,12 +117,7 @@ class ConstrainedZonotope(
         )
 
     @override
-    def minkowski_sum(self, other: AbstractMinkowskiSumSet) -> "ConstrainedZonotope":
-        """Return the Minkowski sum as a constrained zonotope.
-
-        Args:
-            other: Constrained zonotope with the same ambient dimension.
-        """
+    def _minkowski_sum(self, other: AbstractMinkowskiSumSet) -> "ConstrainedZonotope":
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
                 "Minkowski sum requires matching representations, got "
@@ -161,12 +148,7 @@ class ConstrainedZonotope(
         )
 
     @override
-    def intersection(self, other: AbstractIntersectionSet) -> "ConstrainedZonotope":
-        """Return the intersection as a constrained zonotope.
-
-        Args:
-            other: Constrained zonotope with the same ambient dimension.
-        """
+    def _intersection(self, other: AbstractIntersectionSet) -> "ConstrainedZonotope":
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
                 "intersection requires matching representations, got "

@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from convax import VertexPolytope
+from convax import VertexPolytope, affine_map
 
 
 def test_support_selects_maximizing_vertex() -> None:
@@ -27,7 +27,7 @@ def test_affine_map_preserves_vertex_representation() -> None:
     matrix = jnp.array([[1.0, 2.0]])
     offset = jnp.array([0.5])
 
-    image = polytope.affine_map(matrix, offset)
+    image = affine_map(polytope, matrix, offset)
 
     assert isinstance(image, VertexPolytope)
     assert jnp.array_equal(

@@ -20,7 +20,7 @@ def convex_hull[SetT: AbstractConvexHullSet](
 @overload
 def convex_hull(
     left_set: AbstractSupportSet, right_set: AbstractSupportSet
-) -> ConvexHull: ...
+) -> AbstractSupportSet: ...
 
 
 def convex_hull(
@@ -28,8 +28,8 @@ def convex_hull(
 ) -> AbstractConvexSet:
     """Return the smallest convex set containing both operands.
 
-    Matching representations closed under convex hull are retained; otherwise, support-capable
-    operands produce a lazy ``ConvexHull`` without building an explicit hull.
+    Retain matching convex-hull-closed representations; otherwise, return a lazy ``ConvexHull``
+    for support-capable operands.
 
     Args:
         left_set: First convex-set operand.
@@ -46,7 +46,7 @@ def convex_hull(
         and isinstance(left_set, AbstractConvexHullSet)
         and isinstance(right_set, AbstractConvexHullSet)
     ):
-        return left_set.convex_hull(right_set)
+        return left_set._convex_hull(right_set)
     if isinstance(left_set, AbstractSupportSet) and isinstance(
         right_set, AbstractSupportSet
     ):
@@ -62,8 +62,8 @@ def intersection[SetT: AbstractIntersectionSet](
 ) -> SetT:
     """Return the intersection of two sets.
 
-    The representation must be intersection-closed; support functions do not
-    generally determine intersections.
+    The representation must be intersection-closed because support functions generally do not
+    determine intersections.
 
     Args:
         left_set: First intersection-closed convex-set operand.
@@ -74,12 +74,16 @@ def intersection[SetT: AbstractIntersectionSet](
         TypeError: If the sets have different concrete types.
         ValueError: If matching representations have different ambient dimensions.
     """
-    if type(left_set) is not type(right_set):
+    if (
+        type(left_set) is not type(right_set)
+        or not isinstance(left_set, AbstractIntersectionSet)
+        or not isinstance(right_set, AbstractIntersectionSet)
+    ):
         raise TypeError(
             "intersection is not implemented for "
             f"{type(left_set).__name__} and {type(right_set).__name__}"
         )
-    return left_set.intersection(right_set)
+    return left_set._intersection(right_set)
 
 
 @overload
@@ -91,7 +95,7 @@ def minkowski_sum[SetT: AbstractMinkowskiSumSet](
 @overload
 def minkowski_sum(
     left_set: AbstractSupportSet, right_set: AbstractSupportSet
-) -> MinkowskiSum: ...
+) -> AbstractSupportSet: ...
 
 
 def minkowski_sum(
@@ -99,8 +103,8 @@ def minkowski_sum(
 ) -> AbstractConvexSet:
     """Return the Minkowski sum, ``{x + y | x in left_set, y in right_set}``.
 
-    Matching representations closed under Minkowski addition are retained; otherwise,
-    support-capable operands produce a lazy ``MinkowskiSum``.
+    Retain matching Minkowski-addition-closed representations; otherwise, return a lazy
+    ``MinkowskiSum`` for support-capable operands.
 
     Args:
         left_set: First convex-set operand.
@@ -117,7 +121,7 @@ def minkowski_sum(
         and isinstance(left_set, AbstractMinkowskiSumSet)
         and isinstance(right_set, AbstractMinkowskiSumSet)
     ):
-        return left_set.minkowski_sum(right_set)
+        return left_set._minkowski_sum(right_set)
     if isinstance(left_set, AbstractSupportSet) and isinstance(
         right_set, AbstractSupportSet
     ):

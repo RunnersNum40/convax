@@ -21,6 +21,9 @@ The example compares nominal and emergency controls by constructing the convex e
                     AX \oplus BU_\mathrm{emergency}) \oplus W.
 \]
 
+The construction uses the `affine_map`, `minkowski_sum`, and `convex_hull` free
+operations, so each step selects its strongest exact representation.
+
 <!-- fmt:off -->
 ```python title="examples/reachable_sets.py"
 --8<-- "examples/reachable_sets.py"

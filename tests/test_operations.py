@@ -9,6 +9,7 @@ from jaxtyping import TypeCheckError
 from convax import (
     AbstractAffineMapSet,
     AbstractNegationSet,
+    AbstractSupportSet,
     AbstractTranslationSet,
     AffineImage,
     ConstrainedZonotope,
@@ -18,9 +19,14 @@ from convax import (
     MinkowskiSum,
     VertexPolytope,
     Zonotope,
+    affine_map,
+    affine_preimage,
     convex_hull,
     intersection,
     minkowski_sum,
+    negate,
+    project_coordinates,
+    translate,
 )
 from convax._utils import IntegerVectorLike
 
@@ -29,16 +35,16 @@ def translate_capability[SetT: AbstractTranslationSet](
     convex_set: SetT,
     offset: jax.Array,
 ) -> SetT:
-    return convex_set.translate(offset)
+    return translate(convex_set, offset)
 
 
 def negate_capability[SetT: AbstractNegationSet](convex_set: SetT) -> SetT:
-    return convex_set.negate()
+    return negate(convex_set)
 
 
 def test_affine_map_transforms_support_value_and_point() -> None:
     ellipsoid = Ellipsoid([0, 0], jnp.eye(2))
-    image = ellipsoid.affine_map([[2, 0], [0, 3]], [1, -1])
+    image = affine_map(ellipsoid, [[2, 0], [0, 3]], [1, -1])
 
     support = image.support(jnp.array([1.0, 0.0]))
 
@@ -53,7 +59,7 @@ def test_affine_preimage_matches_definition() -> None:
     polyhedron = HalfspacePolyhedron(jnp.eye(2), jnp.ones(2))
     matrix = jnp.array([[2.0, 0.0], [0.0, 0.5]])
     offset = jnp.array([0.5, -0.5])
-    preimage = polyhedron.affine_preimage(matrix, offset)
+    preimage = affine_preimage(polyhedron, matrix, offset)
     point = jnp.array([0.2, 1.0])
 
     assert preimage.contains(point) == polyhedron.contains(matrix @ point + offset)
@@ -70,12 +76,8 @@ def test_affine_preimage_promotes_before_arithmetic() -> None:
         polyhedron.inequality_matrix.astype(jnp.float32) @ offset.astype(jnp.float32)
     )
 
-    eager = polyhedron.affine_preimage(matrix, offset)
-    compiled = jax.jit(
-        lambda convex_set, affine_matrix, affine_offset: convex_set.affine_preimage(
-            affine_matrix, affine_offset
-        )
-    )(polyhedron, matrix, offset)
+    eager = affine_preimage(polyhedron, matrix, offset)
+    compiled = jax.jit(affine_preimage)(polyhedron, matrix, offset)
 
     assert eager.inequality_bounds.dtype == jnp.float32
     assert jnp.array_equal(eager.inequality_bounds, expected_bound)
@@ -85,18 +87,18 @@ def test_affine_preimage_promotes_before_arithmetic() -> None:
 def test_affine_preimage_defaults_zero_offset_and_rejects_dimension_mismatch() -> None:
     polyhedron = HalfspacePolyhedron([[1, 0]], [1])
 
-    preimage = polyhedron.affine_preimage([[2], [0]])
+    preimage = affine_preimage(polyhedron, [[2], [0]])
 
     assert jnp.array_equal(preimage.inequality_matrix, jnp.array([[2.0]]))
     assert jnp.array_equal(preimage.inequality_bounds, polyhedron.inequality_bounds)
     with pytest.raises(TypeCheckError, match="parameter 'matrix'"):
-        polyhedron.affine_preimage(jnp.eye(3))
+        affine_preimage(polyhedron, jnp.eye(3))
 
 
 def test_coordinate_projection_preserves_order_and_duplicates() -> None:
     zonotope = Zonotope([1, 2, 3], jnp.eye(3))
 
-    projected = zonotope.project_coordinates(jnp.array([2, 0, 2]))
+    projected = project_coordinates(zonotope, jnp.array([2, 0, 2]))
 
     assert isinstance(projected, Zonotope)
     assert projected.ambient_dimension == 3
@@ -113,7 +115,7 @@ def test_coordinate_projection_preserves_order_and_duplicates() -> None:
 def test_coordinate_projection_accepts_empty_integer_coordinates() -> None:
     zonotope = Zonotope([1, 2, 3], jnp.eye(3))
 
-    projected = zonotope.project_coordinates(jnp.array([], dtype=jnp.int32))
+    projected = project_coordinates(zonotope, jnp.array([], dtype=jnp.int32))
 
     assert projected.center.shape == (0,)
     assert projected.generator_matrix.shape == (0, 3)
@@ -125,7 +127,7 @@ def test_coordinate_projection_matrix_matches_float16_set_dtype() -> None:
         jnp.eye(3, dtype=jnp.float16),
     )
 
-    projected = zonotope.project_coordinates(jnp.array([2, 0]))
+    projected = project_coordinates(zonotope, jnp.array([2, 0]))
 
     assert projected.generator_matrix.dtype == zonotope.dtype
 
@@ -134,9 +136,9 @@ def test_coordinate_projection_rejects_invalid_rank_and_dtype() -> None:
     zonotope = Zonotope([1, 2], jnp.eye(2))
 
     with pytest.raises(TypeCheckError, match="parameter 'coordinates'"):
-        zonotope.project_coordinates(cast(IntegerVectorLike, [[0]]))
+        project_coordinates(zonotope, cast(IntegerVectorLike, [[0]]))
     with pytest.raises(TypeCheckError, match="parameter 'coordinates'"):
-        zonotope.project_coordinates(cast(IntegerVectorLike, [0.0]))
+        project_coordinates(zonotope, cast(IntegerVectorLike, [0.0]))
 
 
 @pytest.mark.parametrize("invalid_coordinate", [-1, 2])
@@ -146,14 +148,12 @@ def test_coordinate_projection_rejects_invalid_indices_eagerly(
     zonotope = Zonotope([1, 2], jnp.eye(2))
 
     with pytest.raises(eqx.EquinoxRuntimeError, match="ambient dimension"):
-        zonotope.project_coordinates(jnp.array([invalid_coordinate]))
+        project_coordinates(zonotope, jnp.array([invalid_coordinate]))
 
 
 def test_coordinate_projection_rejects_invalid_indices_under_jit() -> None:
     zonotope = Zonotope([1, 2], jnp.eye(2))
-    compiled_projection = jax.jit(
-        lambda convex_set, coordinates: convex_set.project_coordinates(coordinates)
-    )
+    compiled_projection = jax.jit(project_coordinates)
 
     with pytest.raises(jax.errors.JaxRuntimeError, match="ambient dimension"):
         compiled_projection(zonotope, jnp.array([2]))
@@ -169,7 +169,8 @@ def test_minkowski_sum_adds_support_results() -> None:
     left_support = ellipsoid.support(direction)
     right_support = zonotope.support(direction)
 
-    assert_type(summed, MinkowskiSum)
+    assert_type(summed, AbstractSupportSet)
+    assert isinstance(summed, MinkowskiSum)
     assert jnp.allclose(summed_support.value, left_support.value + right_support.value)
     assert jnp.allclose(summed_support.point, left_support.point + right_support.point)
 
@@ -234,18 +235,20 @@ def test_negation_reflects_compact_and_halfspace_sets() -> None:
     assert not reflected_polyhedron.contains(jnp.array([-3.0, 0.0]))
 
 
-def test_composite_transformations_are_explicit_affine_images() -> None:
+def test_composite_transformations_use_affine_image_fallbacks() -> None:
     left = Ellipsoid([0, 0], jnp.eye(2))
     right = Ellipsoid([1, 0], jnp.eye(2))
     hull = convex_hull(left, right)
 
-    assert_type(hull, ConvexHull)
+    assert_type(hull, AbstractSupportSet)
+    assert isinstance(hull, ConvexHull)
     assert not isinstance(hull, AbstractAffineMapSet)
     assert not isinstance(hull, AbstractTranslationSet)
     assert not isinstance(hull, AbstractNegationSet)
-    assert isinstance(AffineImage(hull, [[1, 0]]), AffineImage)
-    assert isinstance(AffineImage(hull, jnp.eye(2), [1, 0]), AffineImage)
-    assert isinstance(AffineImage(hull, -jnp.eye(2)), AffineImage)
+    assert isinstance(affine_map(hull, [[1, 0]]), AffineImage)
+    assert isinstance(project_coordinates(hull, [0]), AffineImage)
+    assert isinstance(translate(hull, [1, 0]), AffineImage)
+    assert isinstance(negate(hull), AffineImage)
 
 
 def test_operation_dimension_mismatches_fail_loudly() -> None:
@@ -278,6 +281,14 @@ def test_unsupported_operation_combinations_fail_loudly() -> None:
 
     with pytest.raises(TypeError, match="intersection is not implemented"):
         cast(Any, intersection)(constrained_zonotope, halfspace_polyhedron)
+    with pytest.raises(TypeError, match="affine map is not implemented"):
+        cast(Any, affine_map)(halfspace_polyhedron, [[1]])
+    with pytest.raises(TypeError, match="coordinate projection is not implemented"):
+        cast(Any, project_coordinates)(halfspace_polyhedron, [0])
+    with pytest.raises(TypeCheckError, match="parameter 'convex_set'"):
+        cast(Any, affine_preimage)(Ellipsoid([0], [[1]]), [[1]])
+    with pytest.raises(TypeCheckError, match="parameter 'left_set'"):
+        cast(Any, intersection)(Ellipsoid([0], [[1]]), Ellipsoid([0], [[1]]))
 
 
 def test_composites_preserve_promoted_query_precision() -> None:
@@ -285,7 +296,7 @@ def test_composites_preserve_promoted_query_precision() -> None:
     higher_precision = VertexPolytope(jnp.array([[0], [0.5]], dtype=jnp.float32))
     direction = jnp.array([1e-8], dtype=jnp.float32)
 
-    image_support = lower_precision.affine_map(jnp.eye(1, dtype=jnp.float32)).support(
+    image_support = affine_map(lower_precision, jnp.eye(1, dtype=jnp.float32)).support(
         direction
     )
     hull_support = convex_hull(lower_precision, higher_precision).support(direction)
@@ -297,11 +308,15 @@ def test_composites_preserve_promoted_query_precision() -> None:
 
 
 def test_affine_image_composes_maps_without_nesting() -> None:
-    source = VertexPolytope([[0, 0], [1, 0]])
-    image = AffineImage(source, [[2, 0], [0, 1]], [1, 0])
+    left = Ellipsoid([0, 0], jnp.eye(2))
+    right = Ellipsoid([1, 0], jnp.eye(2))
+    source = convex_hull(left, right)
+    image = affine_map(source, [[2, 0], [0, 1]], [1, 0])
 
-    mapped = image.affine_map([[1, 1]], [3])
+    mapped = affine_map(image, [[1, 1]], [3])
 
+    assert isinstance(image, AffineImage)
+    assert isinstance(mapped, AffineImage)
     assert mapped.convex_set is source
     assert jnp.array_equal(mapped.matrix, jnp.array([[2.0, 1.0]]))
     assert jnp.array_equal(mapped.offset, jnp.array([4.0]))
