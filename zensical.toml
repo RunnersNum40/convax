@@ -32,6 +32,8 @@ invalid_link_anchors = true
 [project.theme]
 variant = "modern"
 language = "en"
+custom_dir = "overrides"
+favicon = "assets/images/hatched-pentagon.svg"
 features = [
   "content.code.copy",
   "content.code.select",
@@ -70,7 +72,7 @@ toggle.icon = "lucide/moon"
 toggle.name = "Switch to system preference"
 
 [project.theme.icon]
-logo = "lucide/book-x"
+logo = "convax/pentagon"
 repo = "fontawesome/brands/github"
 
 [project.plugins.mkdocstrings.handlers.python]

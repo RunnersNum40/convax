@@ -1,0 +1,45 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-opacity="1"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <style>
+    svg {
+      color: #111827;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      svg {
+        color: #f9fafb;
+      }
+    }
+  </style>
+  <defs>
+    <pattern
+      id="hatch"
+      width="4"
+      height="4"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(54)"
+    >
+      <path
+        d="M0 0V4"
+        fill="none"
+        stroke="currentColor"
+        stroke-opacity="1"
+        stroke-width="1"
+      />
+    </pattern>
+  </defs>
+  <path
+    d="M12 2 21.51 8.91 17.88 20.09H6.12L2.49 8.91Z"
+    fill="url(#hatch)"
+  />
+</svg>

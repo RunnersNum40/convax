@@ -14,6 +14,15 @@ html {
   font-size: 100% !important;
 }
 
+.convax-pentagon-stroke {
+  stroke: #111827;
+  stroke-opacity: 1;
+}
+
+[data-md-color-scheme="slate"] .convax-pentagon-stroke {
+  stroke: #f9fafb;
+}
+
 .md-typeset h1 {
   font-size: 1.6rem;
 }
