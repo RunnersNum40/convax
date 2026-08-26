@@ -9,7 +9,7 @@ library providing sets and operations compatible with `jax.jit`, `jax.grad`
 ```console
 pip install convax
 ```
-
+or
 ```console
 uv add convax
 ```
@@ -37,3 +37,11 @@ support_values = jax.vmap(translated.support_value)(directions)
 See [Set Types and Capabilities](guides/set-types.md) to choose a set type and
 understand return types, or [Extending Convax](guides/extending.md) to implement
 a custom set type.
+
+## Credits
+
+Shout out to [Equinox](https://docs.kidger.site/equinox/) for the awesome
+library that Convax is build on. Also shout out to
+[distreqx](https://lockwo.github.io/distreqx/) and
+[Diffrax](https://docs.kidger.site/diffrax/) for the Equinox-based math-library
+inspiration.
