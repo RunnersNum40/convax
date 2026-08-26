@@ -1,10 +1,10 @@
 from typing import overload
 
 from convax.sets import (
-    AbstractConvexHullSet,
+    AbstractConvexHullClosedSet,
     AbstractConvexSet,
-    AbstractIntersectionSet,
-    AbstractMinkowskiSumSet,
+    AbstractIntersectionClosedSet,
+    AbstractMinkowskiSumClosedSet,
     AbstractSupportSet,
     ConvexHull,
     MinkowskiSum,
@@ -12,7 +12,7 @@ from convax.sets import (
 
 
 @overload
-def convex_hull[SetT: AbstractConvexHullSet](
+def convex_hull[SetT: AbstractConvexHullClosedSet](
     left_set: SetT, right_set: SetT
 ) -> SetT: ...
 
@@ -28,25 +28,25 @@ def convex_hull(
 ) -> AbstractConvexSet:
     """Return the smallest convex set containing both operands.
 
-    Retain matching convex-hull-closed representations; otherwise, return a lazy ``ConvexHull``
-    for support-capable operands.
+    Retain matching convex-hull-closed set types; otherwise return a lazy
+    ``ConvexHull`` for support-capable operands.
 
     Args:
         left_set: First convex-set operand.
         right_set: Second convex-set operand with the same ambient dimension.
 
     Raises:
-        TypeError: If neither representation-preserving construction nor the
+        TypeError: If neither a type-preserving construction nor the
             support-function fallback is available.
         ValueError: If an available construction receives sets with different
             ambient dimensions.
     """
     if (
         type(left_set) is type(right_set)
-        and isinstance(left_set, AbstractConvexHullSet)
-        and isinstance(right_set, AbstractConvexHullSet)
+        and isinstance(left_set, AbstractConvexHullClosedSet)
+        and isinstance(right_set, AbstractConvexHullClosedSet)
     ):
-        return left_set._convex_hull(right_set)
+        return left_set.convex_hull(right_set)
     if isinstance(left_set, AbstractSupportSet) and isinstance(
         right_set, AbstractSupportSet
     ):
@@ -57,13 +57,13 @@ def convex_hull(
     )
 
 
-def intersection[SetT: AbstractIntersectionSet](
+def intersection[SetT: AbstractIntersectionClosedSet](
     left_set: SetT, right_set: SetT
 ) -> SetT:
     """Return the intersection of two sets.
 
-    The representation must be intersection-closed because support functions generally do not
-    determine intersections.
+    The set type must be intersection-closed because support functions
+    generally do not determine intersections.
 
     Args:
         left_set: First intersection-closed convex-set operand.
@@ -72,22 +72,22 @@ def intersection[SetT: AbstractIntersectionSet](
 
     Raises:
         TypeError: If the sets have different concrete types.
-        ValueError: If matching representations have different ambient dimensions.
+        ValueError: If matching set types have different ambient dimensions.
     """
     if (
         type(left_set) is not type(right_set)
-        or not isinstance(left_set, AbstractIntersectionSet)
-        or not isinstance(right_set, AbstractIntersectionSet)
+        or not isinstance(left_set, AbstractIntersectionClosedSet)
+        or not isinstance(right_set, AbstractIntersectionClosedSet)
     ):
         raise TypeError(
             "intersection is not implemented for "
             f"{type(left_set).__name__} and {type(right_set).__name__}"
         )
-    return left_set._intersection(right_set)
+    return left_set.intersection(right_set)
 
 
 @overload
-def minkowski_sum[SetT: AbstractMinkowskiSumSet](
+def minkowski_sum[SetT: AbstractMinkowskiSumClosedSet](
     left_set: SetT, right_set: SetT
 ) -> SetT: ...
 
@@ -103,25 +103,25 @@ def minkowski_sum(
 ) -> AbstractConvexSet:
     """Return the Minkowski sum, ``{x + y | x in left_set, y in right_set}``.
 
-    Retain matching Minkowski-addition-closed representations; otherwise, return a lazy
-    ``MinkowskiSum`` for support-capable operands.
+    Retain matching Minkowski-addition-closed set types; otherwise return
+    a lazy ``MinkowskiSum`` for support-capable operands.
 
     Args:
         left_set: First convex-set operand.
         right_set: Second convex-set operand with the same ambient dimension.
 
     Raises:
-        TypeError: If neither representation-preserving construction nor the
+        TypeError: If neither a type-preserving construction nor the
             support-function fallback is available.
         ValueError: If an available construction receives sets with different
             ambient dimensions.
     """
     if (
         type(left_set) is type(right_set)
-        and isinstance(left_set, AbstractMinkowskiSumSet)
-        and isinstance(right_set, AbstractMinkowskiSumSet)
+        and isinstance(left_set, AbstractMinkowskiSumClosedSet)
+        and isinstance(right_set, AbstractMinkowskiSumClosedSet)
     ):
-        return left_set._minkowski_sum(right_set)
+        return left_set.minkowski_sum(right_set)
     if isinstance(left_set, AbstractSupportSet) and isinstance(
         right_set, AbstractSupportSet
     ):

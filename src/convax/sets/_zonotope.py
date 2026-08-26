@@ -11,14 +11,14 @@ from convax._utils import (
     normalize_query_vector,
 )
 from convax.sets._abstract import (
-    AbstractAffineMapSet,
+    AbstractAffineMapClosedSet,
     AbstractSupportSet,
 )
 from convax.sets._results import SupportResult
 
 
 @final
-class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
+class Zonotope(AbstractAffineMapClosedSet, AbstractSupportSet):
     r"""Affine image of a unit infinity-norm ball.
 
     Represents \(\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1\}\).
@@ -50,8 +50,7 @@ class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
     def dtype(self):
         return self.center.dtype
 
-    @override
-    def _affine_map(
+    def affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -59,6 +58,14 @@ class Zonotope(AbstractAffineMapSet, AbstractSupportSet):
         | Sequence[float | int]
         | None = None,
     ) -> "Zonotope":
+        """Return the affine image as a zonotope.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape ``(output_dimension,)``;
+                ``None`` selects zero.
+        """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,
             self.generator_matrix,

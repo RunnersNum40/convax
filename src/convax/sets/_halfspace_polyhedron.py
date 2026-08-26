@@ -14,24 +14,24 @@ from convax._utils import (
     require_vector_dimension,
 )
 from convax.sets._abstract import (
-    AbstractAffinePreimageSet,
-    AbstractIntersectionSet,
-    AbstractNegationSet,
+    AbstractAffinePreimageClosedSet,
+    AbstractIntersectionClosedSet,
+    AbstractNegationClosedSet,
     AbstractPointContainmentSet,
-    AbstractTranslationSet,
+    AbstractTranslationClosedSet,
 )
 
 
 @final
 class HalfspacePolyhedron(
-    AbstractAffinePreimageSet,
-    AbstractTranslationSet,
-    AbstractNegationSet,
+    AbstractAffinePreimageClosedSet,
+    AbstractTranslationClosedSet,
+    AbstractNegationClosedSet,
     AbstractPointContainmentSet,
-    AbstractIntersectionSet,
+    AbstractIntersectionClosedSet,
 ):
-    r"""Represents \(\{x \mid Ax \leq b, Ex = f\}\). The representation may
-    describe an unbounded, lower-dimensional, or empty set.
+    r"""Represents \(\{x \mid Ax \leq b, Ex = f\}\). The constraints may describe
+    an unbounded, lower-dimensional, or empty set.
 
     Args:
         inequality_matrix: Matrix ``A`` with shape
@@ -112,8 +112,7 @@ class HalfspacePolyhedron(
     def dtype(self):
         return self.inequality_matrix.dtype
 
-    @override
-    def _affine_preimage(
+    def affine_preimage(
         self,
         matrix: Real[ArrayLike, "{self.ambient_dimension} input_dimension"]
         | Sequence[Sequence[float | int]],
@@ -155,11 +154,14 @@ class HalfspacePolyhedron(
             equality_values - equality_matrix @ offset,
         )
 
-    @override
-    def _translate(
+    def translate(
         self,
         offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> "HalfspacePolyhedron":
+        """
+        Args:
+            offset: Translation vector with shape ``(ambient_dimension,)``.
+        """
         offset = as_float_array(offset)
         require_vector_dimension("offset", offset, self.ambient_dimension)
         dtype = jnp.result_type(self.dtype, offset.dtype)
@@ -175,8 +177,7 @@ class HalfspacePolyhedron(
             equality_values + equality_matrix @ offset,
         )
 
-    @override
-    def _negate(self) -> "HalfspacePolyhedron":
+    def negate(self) -> "HalfspacePolyhedron":
         return HalfspacePolyhedron(
             -self.inequality_matrix,
             self.inequality_bounds,
@@ -184,8 +185,13 @@ class HalfspacePolyhedron(
             self.equality_values,
         )
 
-    @override
-    def _intersection(self, other: AbstractIntersectionSet) -> "HalfspacePolyhedron":
+    def intersection(
+        self, other: AbstractIntersectionClosedSet
+    ) -> "HalfspacePolyhedron":
+        """
+        Args:
+            other: Halfspace polyhedron with the same ambient dimension.
+        """
         if not isinstance(other, HalfspacePolyhedron):
             raise TypeError(
                 "intersection requires matching representations, got "
@@ -210,8 +216,7 @@ class HalfspacePolyhedron(
         *,
         tolerance: ScalarLike = 1e-6,
     ) -> Bool[Array, ""]:
-        """Return whether a point satisfies every constraint.
-
+        """
         Args:
             point: Query point with shape ``(ambient_dimension,)``.
             tolerance: Finite, nonnegative scalar feasibility tolerance.

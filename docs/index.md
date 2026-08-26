@@ -1,9 +1,8 @@
 # Convax
 
-Convax is a [JAX](https://jax.readthedocs.io/en/latest/)-based library for
-convex analysis. It provides convex sets and operations compatible with JAX
-transformations such as `jax.jit`, `jax.grad` (with a few exceptions), and
-`jax.vmap`.
+Convax is a [JAX](https://jax.readthedocs.io/en/latest/)-based convex-analysis
+library providing sets and operations compatible with `jax.jit`, `jax.grad`
+(with exceptions), and `jax.vmap`.
 
 ## Installation
 
@@ -32,5 +31,9 @@ translated = operations.translate(ellipsoid, [0.5, 0.0])
 support_values = jax.vmap(translated.support_value)(directions)
 ```
 
-1. You may pass a JAX array, NumPy array, or plain Python sequence to Convax
-   objects. Convax converts inputs to JAX arrays and returns JAX arrays.
+1. Convax accepts JAX arrays, NumPy arrays, and plain Python sequences,
+   converting inputs and outputs to JAX arrays.
+
+See [Set Types and Capabilities](guides/set-types.md) to choose a set type and
+understand return types, or [Extending Convax](guides/extending.md) to implement
+a custom set type.

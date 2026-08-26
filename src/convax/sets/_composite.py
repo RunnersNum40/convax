@@ -11,14 +11,14 @@ from convax._utils import (
     normalize_query_vector,
 )
 from convax.sets._abstract import (
-    AbstractAffineMapSet,
+    AbstractAffineMapClosedSet,
     AbstractSupportSet,
 )
 from convax.sets._results import SupportResult
 
 
 @final
-class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
+class AffineImage(AbstractAffineMapClosedSet, AbstractSupportSet):
     r"""Support-set affine image \(\{Ax + b \mid x \in X\}\).
 
     Args:
@@ -60,8 +60,7 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
     def dtype(self):
         return self.matrix.dtype
 
-    @override
-    def _affine_map(
+    def affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -69,6 +68,14 @@ class AffineImage(AbstractAffineMapSet, AbstractSupportSet):
         | Sequence[float | int]
         | None = None,
     ) -> "AffineImage":
+        """Return the composed affine image.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape ``(output_dimension,)``;
+                ``None`` selects zero.
+        """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
             offset,

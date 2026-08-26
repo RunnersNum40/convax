@@ -8,16 +8,16 @@ import pytest
 import convax
 from convax import operations, sets
 from convax.sets import (
-    AbstractAffineMapSet,
-    AbstractAffinePreimageSet,
-    AbstractConvexHullSet,
+    AbstractAffineMapClosedSet,
+    AbstractAffinePreimageClosedSet,
+    AbstractConvexHullClosedSet,
     AbstractConvexSet,
-    AbstractIntersectionSet,
-    AbstractMinkowskiSumSet,
-    AbstractNegationSet,
+    AbstractIntersectionClosedSet,
+    AbstractMinkowskiSumClosedSet,
+    AbstractNegationClosedSet,
     AbstractPointContainmentSet,
     AbstractSupportSet,
-    AbstractTranslationSet,
+    AbstractTranslationClosedSet,
     AffineImage,
     AxisAlignedBounds,
     ConstrainedZonotope,
@@ -72,6 +72,15 @@ SET_PRODUCING_OPERATIONS = {
     "project_coordinates",
     "translate",
 }
+CLOSED_OPERATION_CAPABILITIES = {
+    "affine_map": AbstractAffineMapClosedSet,
+    "affine_preimage": AbstractAffinePreimageClosedSet,
+    "convex_hull": AbstractConvexHullClosedSet,
+    "intersection": AbstractIntersectionClosedSet,
+    "minkowski_sum": AbstractMinkowskiSumClosedSet,
+    "negate": AbstractNegationClosedSet,
+    "translate": AbstractTranslationClosedSet,
+}
 
 
 def is_jit_decorator(decorator: ast.expr) -> bool:
@@ -119,16 +128,16 @@ def missing_args_documentation(
 @pytest.mark.parametrize(
     "abstract_class",
     [
-        AbstractAffineMapSet,
-        AbstractAffinePreimageSet,
-        AbstractConvexHullSet,
+        AbstractAffineMapClosedSet,
+        AbstractAffinePreimageClosedSet,
         AbstractConvexSet,
-        AbstractIntersectionSet,
-        AbstractMinkowskiSumSet,
-        AbstractNegationSet,
+        AbstractConvexHullClosedSet,
+        AbstractIntersectionClosedSet,
+        AbstractMinkowskiSumClosedSet,
+        AbstractNegationClosedSet,
         AbstractPointContainmentSet,
         AbstractSupportSet,
-        AbstractTranslationSet,
+        AbstractTranslationClosedSet,
     ],
 )
 def test_abstract_classes_cannot_be_instantiated(abstract_class: type) -> None:
@@ -194,10 +203,18 @@ def test_operation_dispatch_does_not_depend_on_concrete_representations(
     assert imported_set_names.isdisjoint(concrete_representations)
 
 
-def test_set_producing_operations_are_only_free_functions() -> None:
+def test_set_producing_methods_match_closed_operation_capabilities() -> None:
     for concrete_class in FINAL_SET_CLASSES:
-        for operation_name in SET_PRODUCING_OPERATIONS:
-            assert not hasattr(concrete_class, operation_name)
+        for operation_name, capability in CLOSED_OPERATION_CAPABILITIES.items():
+            assert hasattr(concrete_class, operation_name) is issubclass(
+                concrete_class, capability
+            )
+            assert not hasattr(concrete_class, f"_{operation_name}")
+            if hasattr(concrete_class, operation_name):
+                assert not getattr(
+                    getattr(concrete_class, operation_name), "__override__", False
+                )
+        assert not hasattr(concrete_class, "project_coordinates")
 
     assert set(convax.__all__) == {"operations", "sets"}
     assert set(operations.__all__) >= SET_PRODUCING_OPERATIONS

@@ -7,12 +7,12 @@ import jax.numpy as jnp
 from jaxtyping import ArrayLike, Integer, Real
 
 from convax.sets import (
-    AbstractAffineMapSet,
-    AbstractAffinePreimageSet,
+    AbstractAffineMapClosedSet,
+    AbstractAffinePreimageClosedSet,
     AbstractConvexSet,
-    AbstractNegationSet,
+    AbstractNegationClosedSet,
     AbstractSupportSet,
-    AbstractTranslationSet,
+    AbstractTranslationClosedSet,
     AffineImage,
 )
 
@@ -23,8 +23,8 @@ def _affine_map_or_image(
     offset: Real[ArrayLike, "_"] | Sequence[float | int] | None,
     operation_name: str,
 ) -> AbstractConvexSet:
-    if isinstance(convex_set, AbstractAffineMapSet):
-        return convex_set._affine_map(matrix, offset)
+    if isinstance(convex_set, AbstractAffineMapClosedSet):
+        return convex_set.affine_map(matrix, offset)
     if isinstance(convex_set, AbstractSupportSet):
         return AffineImage(convex_set, matrix, offset)
     raise TypeError(
@@ -33,7 +33,7 @@ def _affine_map_or_image(
 
 
 @overload
-def affine_map[SetT: AbstractAffineMapSet](
+def affine_map[SetT: AbstractAffineMapClosedSet](
     convex_set: SetT,
     matrix: Real[ArrayLike, "output_dimension {convex_set.ambient_dimension}"]
     | Sequence[Sequence[float | int]],
@@ -58,8 +58,8 @@ def affine_map(
 ) -> AbstractConvexSet:
     """Return the affine image of a convex set.
 
-    Retain affine-map-closed representations; otherwise, return an exact lazy ``AffineImage``
-    for support-capable sets.
+    Retain affine-map-closed set types; otherwise return an exact lazy
+    ``AffineImage`` for support-capable sets.
 
     Args:
         convex_set: Convex set to transform.
@@ -69,14 +69,14 @@ def affine_map(
             ``None`` selects a zero offset.
 
     Raises:
-        TypeError: If neither a representation-preserving construction nor the
+        TypeError: If neither a type-preserving construction nor the
             support-function fallback is available.
         ValueError: If an input has invalid rank or dimension.
     """
     return _affine_map_or_image(convex_set, matrix, offset, "affine map")
 
 
-def affine_preimage[SetT: AbstractAffinePreimageSet](
+def affine_preimage[SetT: AbstractAffinePreimageClosedSet](
     convex_set: SetT,
     matrix: Real[ArrayLike, "{convex_set.ambient_dimension} input_dimension"]
     | Sequence[Sequence[float | int]],
@@ -84,7 +84,7 @@ def affine_preimage[SetT: AbstractAffinePreimageSet](
     | Sequence[float | int]
     | None = None,
 ) -> SetT:
-    """Return the affine preimage of a convex set in the same representation.
+    """Return the affine preimage of a convex set with the same concrete type.
 
     Args:
         convex_set: Affine-preimage-closed convex set.
@@ -94,19 +94,19 @@ def affine_preimage[SetT: AbstractAffinePreimageSet](
             added before membership testing. ``None`` selects a zero offset.
 
     Raises:
-        TypeError: If the representation is not affine-preimage-closed or an input contains
+        TypeError: If the set type is not affine-preimage-closed or an input contains
             complex values.
         ValueError: If an input has invalid rank or dimension.
     """
-    if not isinstance(convex_set, AbstractAffinePreimageSet):
+    if not isinstance(convex_set, AbstractAffinePreimageClosedSet):
         raise TypeError(
             f"affine preimage is not implemented for {type(convex_set).__name__}"
         )
-    return convex_set._affine_preimage(matrix, offset)
+    return convex_set.affine_preimage(matrix, offset)
 
 
 @overload
-def project_coordinates[SetT: AbstractAffineMapSet](
+def project_coordinates[SetT: AbstractAffineMapClosedSet](
     convex_set: SetT,
     coordinates: Integer[ArrayLike, "output_dimension"] | Sequence[int],
 ) -> SetT: ...
@@ -160,7 +160,7 @@ def project_coordinates(
 
 
 @overload
-def translate[SetT: AbstractTranslationSet](
+def translate[SetT: AbstractTranslationClosedSet](
     convex_set: SetT,
     offset: Real[ArrayLike, "{convex_set.ambient_dimension}"] | Sequence[float | int],
 ) -> SetT: ...
@@ -177,8 +177,7 @@ def translate(
     convex_set: AbstractConvexSet,
     offset: Real[ArrayLike, "{convex_set.ambient_dimension}"] | Sequence[float | int],
 ) -> AbstractConvexSet:
-    """Return a translated convex set.
-
+    """
     Args:
         convex_set: Convex set to translate.
         offset: Translation vector with shape ``(convex_set.ambient_dimension,)``.
@@ -187,8 +186,8 @@ def translate(
         TypeError: If no exact construction is available.
         ValueError: If the offset has invalid rank or dimension.
     """
-    if isinstance(convex_set, AbstractTranslationSet):
-        return convex_set._translate(offset)
+    if isinstance(convex_set, AbstractTranslationClosedSet):
+        return convex_set.translate(offset)
     if isinstance(convex_set, AbstractSupportSet):
         return AffineImage(
             convex_set,
@@ -199,7 +198,7 @@ def translate(
 
 
 @overload
-def negate[SetT: AbstractNegationSet](convex_set: SetT) -> SetT: ...
+def negate[SetT: AbstractNegationClosedSet](convex_set: SetT) -> SetT: ...
 
 
 @overload
@@ -207,16 +206,15 @@ def negate(convex_set: AbstractSupportSet) -> AbstractSupportSet: ...
 
 
 def negate(convex_set: AbstractConvexSet) -> AbstractConvexSet:
-    """Return a convex set reflected through the origin.
-
+    """
     Args:
         convex_set: Convex set to negate.
 
     Raises:
         TypeError: If no exact construction is available.
     """
-    if isinstance(convex_set, AbstractNegationSet):
-        return convex_set._negate()
+    if isinstance(convex_set, AbstractNegationClosedSet):
+        return convex_set.negate()
     if isinstance(convex_set, AbstractSupportSet):
         return AffineImage(
             convex_set,

@@ -12,8 +12,8 @@ from convax._utils import (
     require_matrix,
 )
 from convax.sets._abstract import (
-    AbstractAffineMapSet,
-    AbstractConvexHullSet,
+    AbstractAffineMapClosedSet,
+    AbstractConvexHullClosedSet,
     AbstractSupportSet,
 )
 from convax.sets._results import SupportResult
@@ -21,8 +21,8 @@ from convax.sets._results import SupportResult
 
 @final
 class VertexPolytope(
-    AbstractAffineMapSet,
-    AbstractConvexHullSet,
+    AbstractAffineMapClosedSet,
+    AbstractConvexHullClosedSet,
     AbstractSupportSet,
 ):
     """Convex hull of an explicit nonempty vertex collection.
@@ -52,8 +52,7 @@ class VertexPolytope(
     def dtype(self):
         return self.vertices.dtype
 
-    @override
-    def _affine_map(
+    def affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -61,6 +60,14 @@ class VertexPolytope(
         | Sequence[float | int]
         | None = None,
     ) -> "VertexPolytope":
+        """Return the affine image as a vertex polytope.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape ``(output_dimension,)``;
+                ``None`` selects zero.
+        """
         matrix, offset = normalize_affine_map_parameters(
             matrix,
             offset,
@@ -69,8 +76,12 @@ class VertexPolytope(
         )
         return VertexPolytope(self.vertices.astype(matrix.dtype) @ matrix.T + offset)
 
-    @override
-    def _convex_hull(self, other: AbstractConvexHullSet) -> "VertexPolytope":
+    def convex_hull(self, other: AbstractConvexHullClosedSet) -> "VertexPolytope":
+        """Return the convex hull as a vertex polytope.
+
+        Args:
+            other: Vertex polytope with the same ambient dimension.
+        """
         if not isinstance(other, VertexPolytope):
             raise TypeError(
                 "convex hull requires matching representations, got "

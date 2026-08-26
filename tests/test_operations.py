@@ -18,10 +18,10 @@ from convax.operations import (
     translate,
 )
 from convax.sets import (
-    AbstractAffineMapSet,
-    AbstractNegationSet,
+    AbstractAffineMapClosedSet,
+    AbstractNegationClosedSet,
     AbstractSupportSet,
-    AbstractTranslationSet,
+    AbstractTranslationClosedSet,
     AffineImage,
     ConstrainedZonotope,
     ConvexHull,
@@ -33,14 +33,14 @@ from convax.sets import (
 )
 
 
-def translate_capability[SetT: AbstractTranslationSet](
+def translate_capability[SetT: AbstractTranslationClosedSet](
     convex_set: SetT,
     offset: jax.Array,
 ) -> SetT:
     return translate(convex_set, offset)
 
 
-def negate_capability[SetT: AbstractNegationSet](convex_set: SetT) -> SetT:
+def negate_capability[SetT: AbstractNegationClosedSet](convex_set: SetT) -> SetT:
     return negate(convex_set)
 
 
@@ -204,6 +204,29 @@ def test_halfspace_intersection_concatenates_constraints() -> None:
     assert result.contains(jnp.array([1.0, 0.0]))
 
 
+def test_closed_operation_methods_preserve_concrete_representations() -> None:
+    ellipsoid = Ellipsoid([0], [[1]])
+    halfspace_polyhedron = HalfspacePolyhedron([[1]], [1])
+    constrained_zonotope = ConstrainedZonotope(
+        [0], [[1]], jnp.empty((0, 1)), jnp.empty((0,))
+    )
+    vertex_polytope = VertexPolytope([[0], [1]])
+
+    assert isinstance(ellipsoid.affine_map([[2]]), Ellipsoid)
+    assert isinstance(ellipsoid.translate([1]), Ellipsoid)
+    assert isinstance(ellipsoid.negate(), Ellipsoid)
+    assert isinstance(halfspace_polyhedron.affine_preimage([[2]]), HalfspacePolyhedron)
+    assert isinstance(
+        halfspace_polyhedron.intersection(halfspace_polyhedron),
+        HalfspacePolyhedron,
+    )
+    assert isinstance(
+        constrained_zonotope.minkowski_sum(constrained_zonotope),
+        ConstrainedZonotope,
+    )
+    assert isinstance(vertex_polytope.convex_hull(vertex_polytope), VertexPolytope)
+
+
 def test_translation_supports_compact_and_halfspace_sets() -> None:
     zonotope = Zonotope([0, 0], jnp.eye(2))
     polyhedron = HalfspacePolyhedron(jnp.eye(2), jnp.ones(2))
@@ -244,9 +267,9 @@ def test_composite_transformations_use_affine_image_fallbacks() -> None:
 
     assert_type(hull, AbstractSupportSet)
     assert isinstance(hull, ConvexHull)
-    assert not isinstance(hull, AbstractAffineMapSet)
-    assert not isinstance(hull, AbstractTranslationSet)
-    assert not isinstance(hull, AbstractNegationSet)
+    assert not isinstance(hull, AbstractAffineMapClosedSet)
+    assert not isinstance(hull, AbstractTranslationClosedSet)
+    assert not isinstance(hull, AbstractNegationClosedSet)
     assert isinstance(affine_map(hull, [[1, 0]]), AffineImage)
     assert isinstance(project_coordinates(hull, [0]), AffineImage)
     assert isinstance(translate(hull, [1, 0]), AffineImage)

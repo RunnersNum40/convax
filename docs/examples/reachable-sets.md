@@ -14,15 +14,16 @@ AX \oplus BU \oplus W,
 
 where \(\oplus\) denotes a Minkowski sum.
 
-The example compares nominal and emergency controls by constructing the convex envelope
+The example compares nominal and emergency controls by constructing their convex
+envelope
 
 \[
 \operatorname{conv}(AX \oplus BU_\mathrm{nominal},
                     AX \oplus BU_\mathrm{emergency}) \oplus W.
 \]
 
-The construction uses the `affine_map`, `minkowski_sum`, and `convex_hull` free
-operations, so each step selects its strongest exact representation.
+The construction uses the free operations `affine_map`, `minkowski_sum`, and
+`convex_hull`, so each step selects its strongest exact set type.
 
 <!-- fmt:off -->
 ```python title="examples/reachable_sets.py"

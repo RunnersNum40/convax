@@ -1,18 +1,30 @@
+# Abstract Sets
+
+## Base Interface
+
 ::: convax.sets.AbstractConvexSet
 
-::: convax.sets.AbstractAffineMapSet
+## Set Type Closure
 
-::: convax.sets.AbstractAffinePreimageSet
+These interfaces expose same-named methods that return the same concrete type.
+Generic functions in `convax.operations` try them before an exact composite
+fallback.
 
-::: convax.sets.AbstractTranslationSet
+::: convax.sets.AbstractAffineMapClosedSet
 
-::: convax.sets.AbstractNegationSet
+::: convax.sets.AbstractAffinePreimageClosedSet
 
-::: convax.sets.AbstractMinkowskiSumSet
+::: convax.sets.AbstractTranslationClosedSet
 
-::: convax.sets.AbstractIntersectionSet
+::: convax.sets.AbstractNegationClosedSet
 
-::: convax.sets.AbstractConvexHullSet
+::: convax.sets.AbstractMinkowskiSumClosedSet
+
+::: convax.sets.AbstractIntersectionClosedSet
+
+::: convax.sets.AbstractConvexHullClosedSet
+
+## Query Capabilities
 
 ::: convax.sets.AbstractSupportSet
 

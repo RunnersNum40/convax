@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import final, override
+from typing import final
 
 import jax.numpy as jnp
 from jax import Array
@@ -14,17 +14,17 @@ from convax._utils import (
     require_vector,
 )
 from convax.sets._abstract import (
-    AbstractAffineMapSet,
-    AbstractIntersectionSet,
-    AbstractMinkowskiSumSet,
+    AbstractAffineMapClosedSet,
+    AbstractIntersectionClosedSet,
+    AbstractMinkowskiSumClosedSet,
 )
 
 
 @final
 class ConstrainedZonotope(
-    AbstractAffineMapSet,
-    AbstractIntersectionSet,
-    AbstractMinkowskiSumSet,
+    AbstractAffineMapClosedSet,
+    AbstractIntersectionClosedSet,
+    AbstractMinkowskiSumClosedSet,
 ):
     r"""Equality-constrained affine image of the unit infinity-norm ball.
 
@@ -93,8 +93,7 @@ class ConstrainedZonotope(
     def dtype(self):
         return self.center.dtype
 
-    @override
-    def _affine_map(
+    def affine_map(
         self,
         matrix: Real[ArrayLike, "output_dimension {self.ambient_dimension}"]
         | Sequence[Sequence[float | int]],
@@ -102,6 +101,14 @@ class ConstrainedZonotope(
         | Sequence[float | int]
         | None = None,
     ) -> "ConstrainedZonotope":
+        """Return the affine image as a constrained zonotope.
+
+        Args:
+            matrix: Linear-map matrix with shape
+                ``(output_dimension, ambient_dimension)``.
+            offset: Optional translation vector with shape ``(output_dimension,)``;
+                ``None`` selects zero.
+        """
         center, generator_matrix = _affine_map_center_and_generator_matrix(
             self.center,
             self.generator_matrix,
@@ -116,8 +123,14 @@ class ConstrainedZonotope(
             self.constraint_values,
         )
 
-    @override
-    def _minkowski_sum(self, other: AbstractMinkowskiSumSet) -> "ConstrainedZonotope":
+    def minkowski_sum(
+        self, other: AbstractMinkowskiSumClosedSet
+    ) -> "ConstrainedZonotope":
+        """Return the Minkowski sum as a constrained zonotope.
+
+        Args:
+            other: Constrained zonotope with the same ambient dimension.
+        """
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
                 "Minkowski sum requires matching representations, got "
@@ -147,8 +160,14 @@ class ConstrainedZonotope(
             ),
         )
 
-    @override
-    def _intersection(self, other: AbstractIntersectionSet) -> "ConstrainedZonotope":
+    def intersection(
+        self, other: AbstractIntersectionClosedSet
+    ) -> "ConstrainedZonotope":
+        """Return the intersection as a constrained zonotope.
+
+        Args:
+            other: Constrained zonotope with the same ambient dimension.
+        """
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
                 "intersection requires matching representations, got "
