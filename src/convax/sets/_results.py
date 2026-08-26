@@ -21,6 +21,10 @@ class SupportResult(eqx.Module):
         value: Scalar support value.
         point: Support point with shape ``(ambient_dimension,)``.
 
+    Attributes:
+        value: Scalar support value.
+        point: Support point with shape ``(ambient_dimension,)``.
+
     Raises:
         TypeError: If either input contains complex values.
         ValueError: If ``value`` is not scalar or ``point`` is not a vector.
@@ -48,6 +52,10 @@ class AxisAlignedBounds(eqx.Module):
     """Tight coordinate-wise bounds derived from support values.
 
     Args:
+        lower: Lower bounds with shape ``(ambient_dimension,)``.
+        upper: Upper bounds with shape ``(ambient_dimension,)``.
+
+    Attributes:
         lower: Lower bounds with shape ``(ambient_dimension,)``.
         upper: Upper bounds with shape ``(ambient_dimension,)``.
 

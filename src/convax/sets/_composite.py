@@ -19,14 +19,22 @@ from convax.sets._results import SupportResult
 
 @final
 class AffineImage(AbstractAffineMapClosedSet, AbstractSupportSet):
-    r"""Support-set affine image \(\{Ax + b \mid x \in X\}\).
+    r"""Affine image of a support-capable set, \(\{Ax + b \mid x \in X\}\).
 
     Args:
-        convex_set: Support-capable source set.
+        convex_set: Source support-capable set.
         matrix: Linear-map matrix with shape
             ``(output_dimension, convex_set.ambient_dimension)``.
         offset: Optional translation vector with shape ``(output_dimension,)``;
             ``None`` selects zero.
+
+    Attributes:
+        convex_set: Support-capable source set.
+        matrix: Linear-map matrix with shape
+            ``(output_dimension, convex_set.ambient_dimension)``.
+        offset: Translation vector with shape ``(output_dimension,)``.
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: Common JAX dtype of the matrix and offset.
     """
 
     convex_set: AbstractSupportSet
@@ -110,11 +118,17 @@ class AffineImage(AbstractAffineMapClosedSet, AbstractSupportSet):
 
 @final
 class MinkowskiSum(AbstractSupportSet):
-    r"""Minkowski sum \(\{x + y \mid x \in X, y \in Y\}\).
+    r"""Minkowski sum of support-capable sets, \(\{x + y \mid x \in X, y \in Y\}\).
 
     Args:
         left_set: First support-capable operand.
-        right_set: Second support-capable operand with the same ambient dimension.
+        right_set: Second operand with the same ambient dimension.
+
+    Attributes:
+        left_set: First support-capable operand.
+        right_set: Second support-capable operand.
+        ambient_dimension: Shared operand dimension.
+        dtype: Promoted JAX dtype of both operands.
     """
 
     left_set: AbstractSupportSet
@@ -166,7 +180,13 @@ class ConvexHull(AbstractSupportSet):
 
     Args:
         left_set: First support-capable operand.
-        right_set: Second support-capable operand with the same ambient dimension.
+        right_set: Second operand with the same ambient dimension.
+
+    Attributes:
+        left_set: First support-capable operand.
+        right_set: Second support-capable operand.
+        ambient_dimension: Shared operand dimension.
+        dtype: Promoted JAX dtype of both operands.
     """
 
     left_set: AbstractSupportSet

@@ -27,7 +27,7 @@ class Ellipsoid(
     AbstractSupportSet,
     AbstractPointContainmentSet,
 ):
-    r"""Affine image of a Euclidean unit ball.
+    r"""Affine image of the Euclidean unit ball.
 
     Represents \(\{c + Gu \mid \lVert u \rVert_2 \leq 1\}\). The generator
     matrix may be rectangular or rank deficient.
@@ -36,6 +36,13 @@ class Ellipsoid(
         center: Ellipsoid center with shape ``(ambient_dimension,)``.
         generator_matrix: Generator matrix with shape
             ``(ambient_dimension, latent_dimension)``.
+
+    Attributes:
+        center: Ellipsoid center with shape ``(ambient_dimension,)``.
+        generator_matrix: Generator matrix with shape
+            ``(ambient_dimension, latent_dimension)``.
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: Common JAX dtype of the center and generator matrix.
     """
 
     center: Float[Array, "ambient_dimension"]

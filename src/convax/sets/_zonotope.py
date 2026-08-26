@@ -19,7 +19,7 @@ from convax.sets._results import SupportResult
 
 @final
 class Zonotope(AbstractAffineMapClosedSet, AbstractSupportSet):
-    r"""Affine image of a unit infinity-norm ball.
+    r"""Affine image of the unit infinity-norm ball.
 
     Represents \(\{c + G\xi \mid \lVert \xi \rVert_\infty \leq 1\}\).
 
@@ -27,6 +27,13 @@ class Zonotope(AbstractAffineMapClosedSet, AbstractSupportSet):
         center: Zonotope center with shape ``(ambient_dimension,)``.
         generator_matrix: Generator matrix with shape
             ``(ambient_dimension, generator_count)``.
+
+    Attributes:
+        center: Zonotope center with shape ``(ambient_dimension,)``.
+        generator_matrix: Generator matrix with shape
+            ``(ambient_dimension, generator_count)``.
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: Common JAX dtype of the center and generator matrix.
     """
 
     center: Float[Array, "ambient_dimension"]

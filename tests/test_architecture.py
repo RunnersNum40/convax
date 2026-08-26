@@ -125,6 +125,40 @@ def missing_args_documentation(
     return tuple(name for name in parameter_names if name not in documented_parameters)
 
 
+def public_attribute_names(class_definition: ast.ClassDef) -> tuple[str, ...]:
+    declared_attributes = tuple(
+        attribute.target.id
+        for attribute in class_definition.body
+        if isinstance(attribute, ast.AnnAssign)
+        and isinstance(attribute.target, ast.Name)
+        and not attribute.target.id.startswith("_")
+    )
+    inherits_convex_set_interface = any(
+        isinstance(base, ast.Name)
+        and base.id.startswith("Abstract")
+        and base.id.endswith("Set")
+        for base in class_definition.bases
+    )
+    if inherits_convex_set_interface:
+        return tuple(
+            dict.fromkeys((*declared_attributes, "ambient_dimension", "dtype"))
+        )
+    return declared_attributes
+
+
+def missing_attributes_documentation(
+    docstring: str | None, attribute_names: tuple[str, ...]
+) -> tuple[str, ...]:
+    if docstring is None or "Attributes:" not in docstring.splitlines():
+        return attribute_names or ("Attributes",)
+    documented_attributes = {
+        line.strip().split(":", maxsplit=1)[0]
+        for line in docstring.splitlines()
+        if line.startswith("    ") and ":" in line
+    }
+    return tuple(name for name in attribute_names if name not in documented_attributes)
+
+
 @pytest.mark.parametrize(
     "abstract_class",
     [
@@ -277,5 +311,26 @@ def test_public_callables_document_arguments(source_file: Path) -> None:
                 missing_documentation.append(
                     f"{definition.name}.{method.name}: {', '.join(missing_parameters)}"
                 )
+
+    assert not missing_documentation
+
+
+@pytest.mark.parametrize(
+    "source_file", PUBLIC_API_SOURCE_FILES, ids=lambda path: path.name
+)
+def test_public_classes_document_attributes(source_file: Path) -> None:
+    syntax_tree = ast.parse(source_file.read_text(), filename=str(source_file))
+    missing_documentation: list[str] = []
+
+    for definition in syntax_tree.body:
+        if not isinstance(definition, ast.ClassDef) or definition.name.startswith("_"):
+            continue
+        missing_attributes = missing_attributes_documentation(
+            ast.get_docstring(definition), public_attribute_names(definition)
+        )
+        if missing_attributes:
+            missing_documentation.append(
+                f"{definition.name}: {', '.join(missing_attributes)}"
+            )
 
     assert not missing_documentation

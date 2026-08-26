@@ -28,7 +28,7 @@ def convex_hull(
 ) -> AbstractConvexSet:
     """Return the smallest convex set containing both operands.
 
-    Retain matching convex-hull-closed set types; otherwise return a lazy
+    Retain matching convex-hull-closed set types; otherwise return lazy
     ``ConvexHull`` for support-capable operands.
 
     Args:
@@ -62,8 +62,8 @@ def intersection[SetT: AbstractIntersectionClosedSet](
 ) -> SetT:
     """Return the intersection of two sets.
 
-    The set type must be intersection-closed because support functions
-    generally do not determine intersections.
+    The set type must be intersection-closed because support functions generally
+    do not determine intersections.
 
     Args:
         left_set: First intersection-closed convex-set operand.
@@ -103,8 +103,8 @@ def minkowski_sum(
 ) -> AbstractConvexSet:
     """Return the Minkowski sum, ``{x + y | x in left_set, y in right_set}``.
 
-    Retain matching Minkowski-addition-closed set types; otherwise return
-    a lazy ``MinkowskiSum`` for support-capable operands.
+    Retain matching Minkowski-addition-closed set types; otherwise return lazy
+    ``MinkowskiSum`` for support-capable operands.
 
     Args:
         left_set: First convex-set operand.

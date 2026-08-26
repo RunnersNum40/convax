@@ -177,7 +177,8 @@ def translate(
     convex_set: AbstractConvexSet,
     offset: Real[ArrayLike, "{convex_set.ambient_dimension}"] | Sequence[float | int],
 ) -> AbstractConvexSet:
-    """
+    """Return a translated convex set.
+
     Args:
         convex_set: Convex set to translate.
         offset: Translation vector with shape ``(convex_set.ambient_dimension,)``.
@@ -206,7 +207,8 @@ def negate(convex_set: AbstractSupportSet) -> AbstractSupportSet: ...
 
 
 def negate(convex_set: AbstractConvexSet) -> AbstractConvexSet:
-    """
+    """Return a convex set reflected through the origin.
+
     Args:
         convex_set: Convex set to negate.
 

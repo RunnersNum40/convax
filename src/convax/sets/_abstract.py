@@ -13,11 +13,25 @@ from convax.sets._results import AxisAlignedBounds, SupportResult
 
 
 class AbstractConvexSet(eqx.Module):
+    """Base interface for convex set types.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     ambient_dimension: eqx.AbstractVar[int]
     dtype: eqx.AbstractVar[DTypeLike]
 
 
 class AbstractTranslationClosedSet(AbstractConvexSet):
+    """Interface for set types closed under translation.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def translate(
         self,
@@ -31,6 +45,13 @@ class AbstractTranslationClosedSet(AbstractConvexSet):
 
 
 class AbstractNegationClosedSet(AbstractConvexSet):
+    """Interface for set types closed under negation.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def negate(self) -> Self:
         """Return the negated set with the same concrete type."""
@@ -40,6 +61,13 @@ class AbstractAffineMapClosedSet(
     AbstractTranslationClosedSet,
     AbstractNegationClosedSet,
 ):
+    """Interface for set types closed under affine maps.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def affine_map(
         self,
@@ -77,6 +105,13 @@ class AbstractAffineMapClosedSet(
 
 
 class AbstractAffinePreimageClosedSet(AbstractConvexSet):
+    """Interface for set types closed under affine preimages.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def affine_preimage(
         self,
@@ -97,6 +132,13 @@ class AbstractAffinePreimageClosedSet(AbstractConvexSet):
 
 
 class AbstractMinkowskiSumClosedSet(AbstractConvexSet):
+    """Interface for set types closed under Minkowski addition.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def minkowski_sum(self, other: Self) -> Self:
         """Return the Minkowski sum with the same concrete type.
@@ -107,6 +149,13 @@ class AbstractMinkowskiSumClosedSet(AbstractConvexSet):
 
 
 class AbstractIntersectionClosedSet(AbstractConvexSet):
+    """Interface for set types closed under intersection.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def intersection(self, other: Self) -> Self:
         """Return the intersection with the same concrete type.
@@ -117,6 +166,13 @@ class AbstractIntersectionClosedSet(AbstractConvexSet):
 
 
 class AbstractConvexHullClosedSet(AbstractConvexSet):
+    """Interface for set types closed under convex hulls.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def convex_hull(self, other: Self) -> Self:
         """Return the convex hull with the same concrete type.
@@ -127,7 +183,12 @@ class AbstractConvexHullClosedSet(AbstractConvexSet):
 
 
 class AbstractSupportSet(AbstractConvexSet):
-    """Interface for compact convex sets with a support function."""
+    """Interface for compact convex sets with support functions.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
 
     @abstractmethod
     def support(
@@ -144,7 +205,8 @@ class AbstractSupportSet(AbstractConvexSet):
         self,
         direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> Float[Array, ""]:
-        """
+        """Return the support value.
+
         Args:
             direction: Support-query vector with shape ``(ambient_dimension,)``.
         """
@@ -154,13 +216,15 @@ class AbstractSupportSet(AbstractConvexSet):
         self,
         direction: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> Float[Array, "{self.ambient_dimension}"]:
-        """
+        """Return a maximizing support point.
+
         Args:
             direction: Support-query vector with shape ``(ambient_dimension,)``.
         """
         return self.support(direction).point
 
     def axis_aligned_bounds(self) -> AxisAlignedBounds:
+        """Return tight bounds for each coordinate."""
         coordinate_directions = jnp.eye(self.ambient_dimension, dtype=self.dtype)
         upper = jax.vmap(self.support_value)(coordinate_directions)
         lower = -jax.vmap(self.support_value)(-coordinate_directions)
@@ -168,6 +232,13 @@ class AbstractSupportSet(AbstractConvexSet):
 
 
 class AbstractPointContainmentSet(AbstractConvexSet):
+    """Interface for set types supporting point-containment queries.
+
+    Attributes:
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype used by the set.
+    """
+
     @abstractmethod
     def contains(
         self,
@@ -175,7 +246,8 @@ class AbstractPointContainmentSet(AbstractConvexSet):
         *,
         tolerance: ScalarLike = 1e-6,
     ) -> Bool[Array, ""]:
-        """
+        """Check point containment.
+
         Args:
             point: Query point of shape ``(ambient_dimension,)``.
             tolerance: Finite, nonnegative scalar feasibility tolerance.

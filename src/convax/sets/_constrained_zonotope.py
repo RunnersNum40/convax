@@ -41,6 +41,17 @@ class ConstrainedZonotope(
             ``(constraint_count, generator_count)``.
         constraint_values: Latent equality values with shape
             ``(constraint_count,)``.
+
+    Attributes:
+        center: Affine offset with shape ``(ambient_dimension,)``.
+        generator_matrix: Generator matrix with shape
+            ``(ambient_dimension, generator_count)``.
+        constraint_matrix: Latent equality matrix with shape
+            ``(constraint_count, generator_count)``.
+        constraint_values: Latent equality values with shape
+            ``(constraint_count,)``.
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: Common JAX dtype of the set arrays.
     """
 
     center: Float[Array, "ambient_dimension"]
@@ -133,7 +144,7 @@ class ConstrainedZonotope(
         """
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
-                "Minkowski sum requires matching representations, got "
+                "Minkowski sum requires matching set types, got "
                 f"ConstrainedZonotope and {type(other).__name__}"
             )
         if self.ambient_dimension != other.ambient_dimension:
@@ -170,7 +181,7 @@ class ConstrainedZonotope(
         """
         if not isinstance(other, ConstrainedZonotope):
             raise TypeError(
-                "intersection requires matching representations, got "
+                "intersection requires matching set types, got "
                 f"ConstrainedZonotope and {type(other).__name__}"
             )
         if self.ambient_dimension != other.ambient_dimension:

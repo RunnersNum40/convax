@@ -40,6 +40,16 @@ class HalfspacePolyhedron(
         equality_matrix: Optional matrix ``E`` with shape
             ``(equality_count, ambient_dimension)``.
         equality_values: Optional vector ``f`` with shape ``(equality_count,)``.
+
+    Attributes:
+        inequality_matrix: Matrix ``A`` with shape
+            ``(inequality_count, ambient_dimension)``.
+        inequality_bounds: Vector ``b`` with shape ``(inequality_count,)``.
+        equality_matrix: Matrix ``E`` with shape
+            ``(equality_count, ambient_dimension)``.
+        equality_values: Vector ``f`` with shape ``(equality_count,)``.
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: Common JAX dtype of the constraint arrays.
     """
 
     inequality_matrix: Float[Array, "inequality_count ambient_dimension"]
@@ -158,7 +168,8 @@ class HalfspacePolyhedron(
         self,
         offset: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
     ) -> "HalfspacePolyhedron":
-        """
+        """Return the translated halfspace polyhedron.
+
         Args:
             offset: Translation vector with shape ``(ambient_dimension,)``.
         """
@@ -178,6 +189,7 @@ class HalfspacePolyhedron(
         )
 
     def negate(self) -> "HalfspacePolyhedron":
+        """Return the negated halfspace polyhedron."""
         return HalfspacePolyhedron(
             -self.inequality_matrix,
             self.inequality_bounds,
@@ -188,13 +200,14 @@ class HalfspacePolyhedron(
     def intersection(
         self, other: AbstractIntersectionClosedSet
     ) -> "HalfspacePolyhedron":
-        """
+        """Return the intersection as a halfspace polyhedron.
+
         Args:
             other: Halfspace polyhedron with the same ambient dimension.
         """
         if not isinstance(other, HalfspacePolyhedron):
             raise TypeError(
-                "intersection requires matching representations, got "
+                "intersection requires matching set types, got "
                 f"HalfspacePolyhedron and {type(other).__name__}"
             )
         if self.ambient_dimension != other.ambient_dimension:
@@ -216,7 +229,8 @@ class HalfspacePolyhedron(
         *,
         tolerance: ScalarLike = 1e-6,
     ) -> Bool[Array, ""]:
-        """
+        """Return whether a point satisfies every constraint.
+
         Args:
             point: Query point with shape ``(ambient_dimension,)``.
             tolerance: Finite, nonnegative scalar feasibility tolerance.

@@ -29,6 +29,11 @@ class VertexPolytope(
 
     Args:
         vertices: Vertices with shape ``(vertex_count, ambient_dimension)``.
+
+    Attributes:
+        vertices: Vertices with shape ``(vertex_count, ambient_dimension)``.
+        ambient_dimension: Dimension of the containing vector space.
+        dtype: JAX dtype of the vertices.
     """
 
     vertices: Float[Array, "vertex_count ambient_dimension"]
@@ -84,7 +89,7 @@ class VertexPolytope(
         """
         if not isinstance(other, VertexPolytope):
             raise TypeError(
-                "convex hull requires matching representations, got "
+                "convex hull requires matching set types, got "
                 f"VertexPolytope and {type(other).__name__}"
             )
         if self.ambient_dimension != other.ambient_dimension:
