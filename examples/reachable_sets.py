@@ -3,15 +3,15 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax import Ellipsoid, Zonotope, affine_map, convex_hull, minkowski_sum
+from convax import operations, sets
 
 
 @jax.jit
 def query_reachable_envelope(
-    initial_state: Ellipsoid,
-    nominal_control: Zonotope,
-    emergency_control: Zonotope,
-    process_noise: Zonotope,
+    initial_state: sets.Ellipsoid,
+    nominal_control: sets.Zonotope,
+    emergency_control: sets.Zonotope,
+    process_noise: sets.Zonotope,
     directions: Float[Array, "query state_dimension"],
 ) -> tuple[
     Float[Array, "query"],
@@ -23,17 +23,17 @@ def query_reachable_envelope(
     dynamics_matrix = jnp.array([[1.0, time_step], [0.0, 1.0]])
     control_matrix = jnp.array([[0.5 * time_step**2], [time_step]])
 
-    propagated_state = affine_map(initial_state, dynamics_matrix)
-    nominal_reachable_set = minkowski_sum(
+    propagated_state = operations.affine_map(initial_state, dynamics_matrix)
+    nominal_reachable_set = operations.minkowski_sum(
         propagated_state,
-        affine_map(nominal_control, control_matrix),
+        operations.affine_map(nominal_control, control_matrix),
     )
-    emergency_reachable_set = minkowski_sum(
+    emergency_reachable_set = operations.minkowski_sum(
         propagated_state,
-        affine_map(emergency_control, control_matrix),
+        operations.affine_map(emergency_control, control_matrix),
     )
-    reachable_envelope = minkowski_sum(
-        convex_hull(nominal_reachable_set, emergency_reachable_set),
+    reachable_envelope = operations.minkowski_sum(
+        operations.convex_hull(nominal_reachable_set, emergency_reachable_set),
         process_noise,
     )
 
@@ -42,19 +42,19 @@ def query_reachable_envelope(
     return support.value, support.point, bounds.lower, bounds.upper
 
 
-initial_state = Ellipsoid(
+initial_state = sets.Ellipsoid(
     center=jnp.array([0.0, 2.0]),
     generator_matrix=jnp.diag(jnp.array([0.1, 0.2])),
 )
-nominal_control = Zonotope(
+nominal_control = sets.Zonotope(
     center=jnp.array([0.5]),
     generator_matrix=jnp.array([[0.1]]),
 )
-emergency_control = Zonotope(
+emergency_control = sets.Zonotope(
     center=jnp.array([-1.5]),
     generator_matrix=jnp.array([[0.2]]),
 )
-process_noise = Zonotope(
+process_noise = sets.Zonotope(
     center=jnp.zeros(2),
     generator_matrix=jnp.diag(jnp.array([0.01, 0.05])),
 )

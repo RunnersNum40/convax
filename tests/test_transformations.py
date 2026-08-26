@@ -1,9 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from convax import (
-    Ellipsoid,
-    HalfspacePolyhedron,
+from convax.operations import (
     affine_map,
     affine_preimage,
     convex_hull,
@@ -11,6 +9,10 @@ from convax import (
     minkowski_sum,
     negate,
     translate,
+)
+from convax.sets import (
+    Ellipsoid,
+    HalfspacePolyhedron,
 )
 
 

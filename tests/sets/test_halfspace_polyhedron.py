@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import pytest
 from jaxtyping import TypeCheckError
 
-from convax import HalfspacePolyhedron
+from convax.sets import HalfspacePolyhedron
 
 
 def test_containment_checks_inequalities_and_equalities() -> None:

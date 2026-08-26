@@ -1,1 +1,1 @@
-::: convax.affine_map
+::: convax.operations.affine_map

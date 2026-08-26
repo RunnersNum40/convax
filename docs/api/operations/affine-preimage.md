@@ -1,1 +1,1 @@
-::: convax.affine_preimage
+::: convax.operations.affine_preimage

@@ -1,1 +1,1 @@
-::: convax.intersection
+::: convax.operations.intersection

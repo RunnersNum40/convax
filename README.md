@@ -13,14 +13,14 @@ halfspace and constrained-zonotope representations.
 import jax
 import jax.numpy as jnp
 
-from convax import Ellipsoid, translate
+from convax import operations, sets
 
-ellipsoid = Ellipsoid(
+ellipsoid = sets.Ellipsoid(
     center=jnp.array([1.0, -1.0]),
     generator_matrix=jnp.array([[2.0, 0.0], [0.0, 1.0]]),
 )
 directions = jnp.eye(2)
-translated = translate(ellipsoid, jnp.array([0.5, 0.0]))
+translated = operations.translate(ellipsoid, jnp.array([0.5, 0.0]))
 support_values = jax.jit(jax.vmap(translated.support_value))(directions)
 ```
 

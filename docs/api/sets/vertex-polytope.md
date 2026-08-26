@@ -1,1 +1,1 @@
-::: convax.VertexPolytope
+::: convax.sets.VertexPolytope

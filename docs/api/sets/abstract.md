@@ -1,19 +1,19 @@
-::: convax.AbstractConvexSet
+::: convax.sets.AbstractConvexSet
 
-::: convax.AbstractAffineMapSet
+::: convax.sets.AbstractAffineMapSet
 
-::: convax.AbstractAffinePreimageSet
+::: convax.sets.AbstractAffinePreimageSet
 
-::: convax.AbstractTranslationSet
+::: convax.sets.AbstractTranslationSet
 
-::: convax.AbstractNegationSet
+::: convax.sets.AbstractNegationSet
 
-::: convax.AbstractMinkowskiSumSet
+::: convax.sets.AbstractMinkowskiSumSet
 
-::: convax.AbstractIntersectionSet
+::: convax.sets.AbstractIntersectionSet
 
-::: convax.AbstractConvexHullSet
+::: convax.sets.AbstractConvexHullSet
 
-::: convax.AbstractSupportSet
+::: convax.sets.AbstractSupportSet
 
-::: convax.AbstractPointContainmentSet
+::: convax.sets.AbstractPointContainmentSet

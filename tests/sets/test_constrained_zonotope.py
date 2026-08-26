@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import pytest
 from jaxtyping import TypeCheckError
 
-from convax import ConstrainedZonotope
+from convax.sets import ConstrainedZonotope
 
 
 def test_constructor_normalizes_arrays_and_promotes_common_dtype() -> None:

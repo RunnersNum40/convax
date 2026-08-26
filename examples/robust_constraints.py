@@ -3,19 +3,14 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Bool, Float
 
-from convax import (
-    HalfspacePolyhedron,
-    Zonotope,
-    affine_preimage,
-    intersection,
-)
+from convax import operations, sets
 
 
 @jax.jit
 def classify_robustly_admissible_states(
-    output_limits: HalfspacePolyhedron,
-    output_disturbance: Zonotope,
-    state_limits: HalfspacePolyhedron,
+    output_limits: sets.HalfspacePolyhedron,
+    output_disturbance: sets.Zonotope,
+    state_limits: sets.HalfspacePolyhedron,
     output_matrix: Float[Array, "output_dimension state_dimension"],
     output_offset: Float[Array, "output_dimension"],
     candidate_states: Float[Array, "candidate state_dimension"],
@@ -26,16 +21,16 @@ def classify_robustly_admissible_states(
     disturbance_margins = jax.vmap(output_disturbance.support_value)(
         output_limits.inequality_matrix
     )
-    tightened_output_limits = HalfspacePolyhedron(
+    tightened_output_limits = sets.HalfspacePolyhedron(
         output_limits.inequality_matrix,
         output_limits.inequality_bounds - disturbance_margins,
     )
-    robust_output_preimage = affine_preimage(
+    robust_output_preimage = operations.affine_preimage(
         tightened_output_limits,
         output_matrix,
         output_offset,
     )
-    admissible_states = intersection(state_limits, robust_output_preimage)
+    admissible_states = operations.intersection(state_limits, robust_output_preimage)
     is_admissible = jax.vmap(admissible_states.contains)(candidate_states)
     return is_admissible, disturbance_margins
 
@@ -48,15 +43,15 @@ box_normals = jnp.array(
         [0.0, -1.0],
     ]
 )
-output_limits = HalfspacePolyhedron(
+output_limits = sets.HalfspacePolyhedron(
     box_normals,
     jnp.array([1.0, 1.0, 0.5, 0.5]),
 )
-output_disturbance = Zonotope(
+output_disturbance = sets.Zonotope(
     center=jnp.zeros(2),
     generator_matrix=jnp.diag(jnp.array([0.1, 0.05])),
 )
-state_limits = HalfspacePolyhedron(
+state_limits = sets.HalfspacePolyhedron(
     box_normals,
     jnp.array([2.0, 2.0, 1.0, 1.0]),
 )

@@ -3,12 +3,12 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax import AbstractSupportSet, Zonotope
+from convax import sets
 
 
 @jax.jit
 def query_support_boundary(
-    convex_set: AbstractSupportSet,
+    convex_set: sets.AbstractSupportSet,
     directions: Float[Array, "query ambient_dimension"],
 ) -> tuple[
     Float[Array, "query"],
@@ -21,7 +21,7 @@ def query_support_boundary(
     return support.value, support.point, bounds.lower, bounds.upper
 
 
-reachable_position = Zonotope(
+reachable_position = sets.Zonotope(
     center=jnp.array([1.0, -0.5]),
     generator_matrix=jnp.array(
         [

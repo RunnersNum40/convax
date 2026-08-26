@@ -1,1 +1,1 @@
-::: convax.minkowski_sum
+::: convax.operations.minkowski_sum

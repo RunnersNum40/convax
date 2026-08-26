@@ -1,1 +1,1 @@
-::: convax.Ellipsoid
+::: convax.sets.Ellipsoid

@@ -6,7 +6,18 @@ import jax.numpy as jnp
 import pytest
 from jaxtyping import TypeCheckError
 
-from convax import (
+from convax._utils import IntegerVectorLike
+from convax.operations import (
+    affine_map,
+    affine_preimage,
+    convex_hull,
+    intersection,
+    minkowski_sum,
+    negate,
+    project_coordinates,
+    translate,
+)
+from convax.sets import (
     AbstractAffineMapSet,
     AbstractNegationSet,
     AbstractSupportSet,
@@ -19,16 +30,7 @@ from convax import (
     MinkowskiSum,
     VertexPolytope,
     Zonotope,
-    affine_map,
-    affine_preimage,
-    convex_hull,
-    intersection,
-    minkowski_sum,
-    negate,
-    project_coordinates,
-    translate,
 )
-from convax._utils import IntegerVectorLike
 
 
 def translate_capability[SetT: AbstractTranslationSet](

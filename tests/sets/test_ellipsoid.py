@@ -4,7 +4,8 @@ import pytest
 from jax.typing import DTypeLike
 from jaxtyping import TypeCheckError
 
-from convax import Ellipsoid, affine_map
+from convax.operations import affine_map
+from convax.sets import Ellipsoid
 
 
 def test_support_matches_closed_form() -> None:

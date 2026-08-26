@@ -3,25 +3,25 @@ import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
-from convax import Ellipsoid, affine_map
+from convax import operations, sets
 
 
 def collision_clearance(
     pose: Float[Array, "3"],
-    local_footprint: Ellipsoid,
+    local_footprint: sets.Ellipsoid,
     obstacle_normal: Float[Array, "2"],
     obstacle_bound: Float[Array, ""],
 ) -> Float[Array, ""]:
     cosine = jnp.cos(pose[2])
     sine = jnp.sin(pose[2])
     rotation_matrix = jnp.array([[cosine, -sine], [sine, cosine]])
-    world_footprint = affine_map(local_footprint, rotation_matrix, pose[:2])
+    world_footprint = operations.affine_map(local_footprint, rotation_matrix, pose[:2])
     return obstacle_bound - world_footprint.support_value(obstacle_normal)
 
 
 def evaluate_clearance_ascent_step(
     pose: Float[Array, "3"],
-    local_footprint: Ellipsoid,
+    local_footprint: sets.Ellipsoid,
     obstacle_normal: Float[Array, "2"],
     obstacle_bound: Float[Array, ""],
 ) -> tuple[
@@ -43,7 +43,7 @@ def evaluate_clearance_ascent_step(
     return clearance, clearance_gradient, improved_pose, improved_clearance
 
 
-local_footprint = Ellipsoid(
+local_footprint = sets.Ellipsoid(
     center=jnp.zeros(2),
     generator_matrix=jnp.diag(jnp.array([0.6, 0.25])),
 )

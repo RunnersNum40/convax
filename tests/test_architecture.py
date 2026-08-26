@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 import convax
-import convax.operations
-from convax import (
+from convax import operations, sets
+from convax.sets import (
     AbstractAffineMapSet,
     AbstractAffinePreimageSet,
     AbstractConvexHullSet,
@@ -199,8 +199,11 @@ def test_set_producing_operations_are_only_free_functions() -> None:
         for operation_name in SET_PRODUCING_OPERATIONS:
             assert not hasattr(concrete_class, operation_name)
 
-    assert set(convax.__all__) >= SET_PRODUCING_OPERATIONS
-    assert set(convax.operations.__all__) >= SET_PRODUCING_OPERATIONS
+    assert set(convax.__all__) == {"operations", "sets"}
+    assert set(operations.__all__) >= SET_PRODUCING_OPERATIONS
+    assert set(sets.__all__) >= {
+        concrete_class.__name__ for concrete_class in FINAL_CLASSES
+    }
 
 
 def test_runtime_typechecking_is_ci_only() -> None:

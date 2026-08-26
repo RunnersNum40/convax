@@ -1,1 +1,1 @@
-::: convax.negate
+::: convax.operations.negate

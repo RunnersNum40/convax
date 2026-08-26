@@ -3,7 +3,8 @@ import jax.numpy as jnp
 import pytest
 from jaxtyping import TypeCheckError
 
-from convax import Zonotope, affine_map
+from convax.operations import affine_map
+from convax.sets import Zonotope
 
 
 def test_support_matches_generator_formula() -> None:

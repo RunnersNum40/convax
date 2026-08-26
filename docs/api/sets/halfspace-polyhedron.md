@@ -1,1 +1,1 @@
-::: convax.HalfspacePolyhedron
+::: convax.sets.HalfspacePolyhedron

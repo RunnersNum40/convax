@@ -1,1 +1,1 @@
-::: convax.convex_hull
+::: convax.operations.convex_hull

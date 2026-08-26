@@ -2,7 +2,8 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from convax import VertexPolytope, affine_map
+from convax.operations import affine_map
+from convax.sets import VertexPolytope
 
 
 def test_support_selects_maximizing_vertex() -> None:

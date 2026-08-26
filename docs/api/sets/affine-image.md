@@ -1,3 +1,3 @@
-Use `convax.affine_map` for normal dispatch; construct `AffineImage` directly only to require its lazy support-function representation instead of retaining another exact representation.
+Use `convax.operations.affine_map` for dispatch; construct `AffineImage` directly only when requiring its lazy support-function representation instead of retaining an exact representation.
 
-::: convax.AffineImage
+::: convax.sets.AffineImage
