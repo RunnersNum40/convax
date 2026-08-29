@@ -9,6 +9,7 @@ description = "Convex set manipulation library in JAX with Equinox"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "Theodore Pinkerton", email = "ted@tedpinkerton.ca" }]
 dependencies = [
   "equinox>=0.13.8,<0.14",
