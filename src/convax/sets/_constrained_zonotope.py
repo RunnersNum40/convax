@@ -10,6 +10,7 @@ from convax._utils import (
     _affine_map_center_and_generator_matrix,
     as_float_array,
     normalize_center_and_generator_matrix,
+    require_finite,
     require_matrix,
     require_vector,
 )
@@ -93,8 +94,12 @@ class ConstrainedZonotope(
         )
         self.center = center.astype(dtype)
         self.generator_matrix = generator_matrix.astype(dtype)
-        self.constraint_matrix = constraint_matrix.astype(dtype)
-        self.constraint_values = constraint_values.astype(dtype)
+        self.constraint_matrix = require_finite(
+            "constraint_matrix", constraint_matrix.astype(dtype)
+        )
+        self.constraint_values = require_finite(
+            "constraint_values", constraint_values.astype(dtype)
+        )
 
     @property
     def ambient_dimension(self) -> int:

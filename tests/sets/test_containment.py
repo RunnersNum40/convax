@@ -38,24 +38,30 @@ def test_containment_rejects_complex_tolerance(
         containment_set.contains([0], tolerance=jnp.array(1e-3 + 1e-3j))
 
 
-@pytest.mark.parametrize("tolerance", [-1e-3, jnp.inf, jnp.nan])
-def test_containment_rejects_invalid_tolerance_eagerly(
+@pytest.mark.parametrize(
+    ("tolerance", "message"),
+    [
+        pytest.param(-1e-3, "must be nonnegative", id="negative"),
+        pytest.param(jnp.inf, "must contain only finite", id="positive-infinity"),
+        pytest.param(-jnp.inf, "must contain only finite", id="negative-infinity"),
+        pytest.param(jnp.nan, "must contain only finite", id="nan"),
+    ],
+)
+def test_containment_rejects_invalid_tolerance(
     containment_set: AbstractPointContainmentSet,
     tolerance: float | jax.Array,
-) -> None:
-    with pytest.raises(eqx.EquinoxRuntimeError, match="finite and nonnegative"):
-        containment_set.contains([0], tolerance=tolerance)
-
-
-def test_containment_rejects_invalid_tolerance_under_jit(
-    containment_set: AbstractPointContainmentSet,
+    message: str,
 ) -> None:
     compiled_contains = jax.jit(
-        lambda point, tolerance: containment_set.contains(point, tolerance=tolerance)
+        lambda point, candidate_tolerance: containment_set.contains(
+            point, tolerance=candidate_tolerance
+        )
     )
 
-    with pytest.raises(jax.errors.JaxRuntimeError, match="finite and nonnegative"):
-        compiled_contains(jnp.zeros(1), jnp.array(-1e-3))
+    with pytest.raises(eqx.EquinoxRuntimeError, match=message):
+        containment_set.contains([0], tolerance=tolerance)
+    with pytest.raises(jax.errors.JaxRuntimeError, match=message):
+        compiled_contains(jnp.zeros(1), tolerance)
 
 
 @pytest.mark.parametrize(
@@ -71,12 +77,12 @@ def test_containment_rejects_invalid_tolerance_under_jit(
         ),
     ],
 )
-def test_containment_validates_tolerance_before_dtype_promotion(
+def test_containment_preserves_small_negative_tolerance_during_dtype_promotion(
     containment_set: AbstractPointContainmentSet,
 ) -> None:
     tolerance = jnp.array(-1e-8, dtype=jnp.float32)
 
-    with pytest.raises(eqx.EquinoxRuntimeError, match="finite and nonnegative"):
+    with pytest.raises(eqx.EquinoxRuntimeError, match="must be nonnegative"):
         containment_set.contains([0], tolerance=tolerance)
 
     compiled_contains = jax.jit(
@@ -84,7 +90,7 @@ def test_containment_validates_tolerance_before_dtype_promotion(
             [0], tolerance=candidate_tolerance
         )
     )
-    with pytest.raises(jax.errors.JaxRuntimeError, match="finite and nonnegative"):
+    with pytest.raises(jax.errors.JaxRuntimeError, match="must be nonnegative"):
         compiled_contains(tolerance)
 
 

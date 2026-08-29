@@ -255,5 +255,6 @@ class AbstractPointContainmentSet(AbstractConvexSet):
         Raises:
             TypeError: If an input contains complex values.
             ValueError: If an input has invalid rank or dimension.
-            EquinoxRuntimeError: If ``tolerance`` is negative or nonfinite.
+            EquinoxRuntimeError: If ``point`` or ``tolerance`` is nonfinite,
+                or if ``tolerance`` is negative.
         """

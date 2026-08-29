@@ -9,6 +9,7 @@ from convax._utils import (
     as_float_array,
     normalize_query_vector,
     normalize_tolerance,
+    require_finite,
     require_matrix,
     require_vector,
     require_vector_dimension,
@@ -109,10 +110,18 @@ class HalfspacePolyhedron(
             equality_matrix.dtype,
             equality_values.dtype,
         )
-        self.inequality_matrix = inequality_matrix.astype(dtype)
-        self.inequality_bounds = inequality_bounds.astype(dtype)
-        self.equality_matrix = equality_matrix.astype(dtype)
-        self.equality_values = equality_values.astype(dtype)
+        self.inequality_matrix = require_finite(
+            "inequality_matrix", inequality_matrix.astype(dtype)
+        )
+        self.inequality_bounds = require_finite(
+            "inequality_bounds", inequality_bounds.astype(dtype)
+        )
+        self.equality_matrix = require_finite(
+            "equality_matrix", equality_matrix.astype(dtype)
+        )
+        self.equality_values = require_finite(
+            "equality_values", equality_values.astype(dtype)
+        )
 
     @property
     def ambient_dimension(self) -> int:
@@ -151,8 +160,8 @@ class HalfspacePolyhedron(
             offset = as_float_array(offset)
         require_vector_dimension("offset", offset, matrix.shape[0])
         dtype = jnp.result_type(self.dtype, matrix.dtype, offset.dtype)
-        matrix = matrix.astype(dtype)
-        offset = offset.astype(dtype)
+        matrix = require_finite("matrix", matrix.astype(dtype))
+        offset = require_finite("offset", offset.astype(dtype))
         inequality_matrix = self.inequality_matrix.astype(dtype)
         inequality_bounds = self.inequality_bounds.astype(dtype)
         equality_matrix = self.equality_matrix.astype(dtype)
@@ -173,14 +182,14 @@ class HalfspacePolyhedron(
         Args:
             offset: Translation vector with shape ``(ambient_dimension,)``.
         """
-        offset = as_float_array(offset)
-        require_vector_dimension("offset", offset, self.ambient_dimension)
-        dtype = jnp.result_type(self.dtype, offset.dtype)
+        offset = normalize_query_vector(
+            "offset", offset, self.ambient_dimension, dtype=self.dtype
+        )
+        dtype = offset.dtype
         inequality_matrix = self.inequality_matrix.astype(dtype)
         inequality_bounds = self.inequality_bounds.astype(dtype)
         equality_matrix = self.equality_matrix.astype(dtype)
         equality_values = self.equality_values.astype(dtype)
-        offset = offset.astype(dtype)
         return HalfspacePolyhedron(
             inequality_matrix,
             inequality_bounds + inequality_matrix @ offset,

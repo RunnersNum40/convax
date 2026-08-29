@@ -8,6 +8,7 @@ from jaxtyping import ArrayLike, Float, Real, ScalarLike
 
 from convax._utils import (
     as_float_array,
+    require_finite,
     require_scalar,
     require_vector,
 )
@@ -28,6 +29,7 @@ class SupportResult(eqx.Module):
     Raises:
         TypeError: If either input contains complex values.
         ValueError: If ``value`` is not scalar or ``point`` is not a vector.
+        EquinoxRuntimeError: If ``value`` or ``point`` is nonfinite.
     """
 
     value: Float[Array, ""]
@@ -43,8 +45,8 @@ class SupportResult(eqx.Module):
         require_scalar("value", value)
         require_vector("point", point)
         dtype = jnp.result_type(value.dtype, point.dtype)
-        self.value = value.astype(dtype)
-        self.point = point.astype(dtype)
+        self.value = require_finite("value", value.astype(dtype))
+        self.point = require_finite("point", point.astype(dtype))
 
 
 @final
@@ -62,6 +64,8 @@ class AxisAlignedBounds(eqx.Module):
     Raises:
         TypeError: If either input contains complex values.
         ValueError: If an input is not a vector or their shapes differ.
+        EquinoxRuntimeError: If ``lower`` or ``upper`` is nonfinite, or the
+            bounds are reversed.
     """
 
     lower: Float[Array, "ambient_dimension"]
@@ -82,5 +86,12 @@ class AxisAlignedBounds(eqx.Module):
                 f"{lower.shape} and {upper.shape}"
             )
         dtype = jnp.result_type(lower.dtype, upper.dtype)
-        self.lower = lower.astype(dtype)
-        self.upper = upper.astype(dtype)
+        lower = require_finite("lower", lower.astype(dtype))
+        upper = require_finite("upper", upper.astype(dtype))
+        lower, upper = eqx.error_if(
+            (lower, upper),
+            jnp.any(lower > upper),
+            "lower bounds must not exceed upper bounds",
+        )
+        self.lower = lower
+        self.upper = upper

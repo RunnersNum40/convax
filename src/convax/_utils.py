@@ -48,6 +48,14 @@ def require_vector_dimension(name: str, array: Array, dimension: int) -> None:
         )
 
 
+def require_finite(name: str, array: Array) -> Array:
+    return eqx.error_if(
+        array,
+        jnp.any(~jnp.isfinite(array)),
+        f"{name} must contain only finite values",
+    )
+
+
 def normalize_affine_map_parameters(
     matrix: MatrixLike,
     offset: VectorLike | None,
@@ -71,7 +79,9 @@ def normalize_affine_map_parameters(
         offset = as_float_array(offset)
     require_vector_dimension("offset", offset, matrix.shape[0])
     dtype = jnp.result_type(dtype, matrix.dtype, offset.dtype)
-    return matrix.astype(dtype), offset.astype(dtype)
+    matrix = require_finite("matrix", matrix.astype(dtype))
+    offset = require_finite("offset", offset.astype(dtype))
+    return matrix, offset
 
 
 def _affine_map_center_and_generator_matrix(
@@ -113,7 +123,11 @@ def normalize_center_and_generator_matrix(
             f"{generator_matrix.shape} and {center.shape}"
         )
     dtype = jnp.result_type(center.dtype, generator_matrix.dtype)
-    return center.astype(dtype), generator_matrix.astype(dtype)
+    center = require_finite("center", center.astype(dtype))
+    generator_matrix = require_finite(
+        "generator_matrix", generator_matrix.astype(dtype)
+    )
+    return center, generator_matrix
 
 
 def normalize_query_vector(
@@ -126,19 +140,20 @@ def normalize_query_vector(
     value = as_float_array(value)
     require_vector_dimension(name, value, ambient_dimension)
     dtype = jnp.result_type(dtype, value.dtype)
-    return value.astype(dtype)
+    return require_finite(name, value.astype(dtype))
 
 
 def normalize_tolerance(tolerance: ScalarLike, *, dtype: DTypeLike) -> Float[Array, ""]:
     tolerance = as_float_array(tolerance)
     require_scalar("tolerance", tolerance)
+    dtype = jnp.result_type(dtype, tolerance.dtype)
+    tolerance = require_finite("tolerance", tolerance.astype(dtype))
     tolerance = eqx.error_if(
         tolerance,
-        (tolerance < 0) | ~jnp.isfinite(tolerance),
-        "tolerance must be finite and nonnegative",
+        tolerance < 0,
+        "tolerance must be nonnegative",
     )
-    dtype = jnp.result_type(dtype, tolerance.dtype)
-    return tolerance.astype(dtype)
+    return tolerance
 
 
 def _scaled_l2_norm(vector: Float[Array, "dimension"]) -> Float[Array, ""]:

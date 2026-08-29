@@ -9,6 +9,7 @@ from convax._utils import (
     as_float_array,
     normalize_affine_map_parameters,
     normalize_query_vector,
+    require_finite,
     require_matrix,
 )
 from convax.sets._abstract import (
@@ -47,7 +48,7 @@ class VertexPolytope(
         require_matrix("vertices", vertices)
         if vertices.shape[0] == 0:
             raise ValueError("vertices must contain at least one point")
-        self.vertices = vertices
+        self.vertices = require_finite("vertices", vertices)
 
     @property
     def ambient_dimension(self) -> int:
