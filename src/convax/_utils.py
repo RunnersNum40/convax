@@ -163,7 +163,7 @@ def _scaled_l2_norm(vector: Float[Array, "dimension"]) -> Float[Array, ""]:
 
     accumulation_dtype = jnp.result_type(output_dtype, jnp.float32)
     vector = vector.astype(accumulation_dtype)
-    scale = jnp.max(jnp.abs(vector))
+    scale = jax.lax.stop_gradient(jnp.max(jnp.abs(vector)))
     norm = jax.lax.cond(
         jnp.isfinite(scale) & (scale > 0),
         lambda: scale * jnp.sqrt(jnp.sum(jnp.square(vector / scale))),

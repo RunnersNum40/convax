@@ -173,13 +173,46 @@ def test_support_is_jittable_vectorizable_and_differentiable() -> None:
     assert jnp.allclose(center_gradient, jnp.array([1.0, 2.0]))
 
 
-def test_support_direction_gradient_uses_stable_norm() -> None:
-    ellipsoid = Ellipsoid(jnp.zeros(2), jnp.eye(2))
-    direction = jnp.array([3.0, 4.0])
+@pytest.mark.parametrize(
+    ("dtype", "direction_values", "expected_gradient_values"),
+    [
+        pytest.param(jnp.float32, [3.0, 4.0], [0.6, 0.8], id="float32-ordinary"),
+        pytest.param(jnp.float32, [1e-30], [1.0], id="float32-tiny"),
+        pytest.param(jnp.float32, [3e20, 4e20], [0.6, 0.8], id="float32-large"),
+        pytest.param(
+            jnp.float64,
+            [1e-300],
+            [1.0],
+            id="float64-tiny",
+            marks=pytest.mark.skipif(not jax.config.x64_enabled, reason="requires x64"),
+        ),
+        pytest.param(
+            jnp.float64,
+            [3e200, 4e200],
+            [0.6, 0.8],
+            id="float64-large",
+            marks=pytest.mark.skipif(not jax.config.x64_enabled, reason="requires x64"),
+        ),
+    ],
+)
+def test_support_direction_gradient_uses_stable_norm(
+    dtype: DTypeLike,
+    direction_values: list[float],
+    expected_gradient_values: list[float],
+) -> None:
+    direction = jnp.array(direction_values, dtype=dtype)
+    ellipsoid = Ellipsoid(
+        jnp.zeros_like(direction), jnp.eye(direction.size, dtype=dtype)
+    )
+    expected_gradient = jnp.array(expected_gradient_values, dtype=dtype)
 
-    direction_gradient = jax.grad(ellipsoid.support_value)(direction)
+    eager_gradient = jax.grad(ellipsoid.support_value)(direction)
+    compiled_gradient = jax.jit(jax.grad(ellipsoid.support_value))(direction)
 
-    assert jnp.allclose(direction_gradient, jnp.array([0.6, 0.8]))
+    assert jnp.all(jnp.isfinite(eager_gradient))
+    assert jnp.all(jnp.isfinite(compiled_gradient))
+    assert jnp.allclose(eager_gradient, expected_gradient)
+    assert jnp.allclose(compiled_gradient, expected_gradient)
 
 
 @pytest.mark.parametrize(
