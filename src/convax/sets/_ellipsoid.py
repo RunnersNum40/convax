@@ -10,8 +10,8 @@ from convax._utils import (
     _affine_map_center_and_generator_matrix,
     _scaled_l2_norm,
     normalize_center_and_generator_matrix,
+    normalize_nonnegative_scalar,
     normalize_query_vector,
-    normalize_tolerance,
 )
 from convax.sets._abstract import (
     AbstractAffineMapClosedSet,
@@ -130,26 +130,61 @@ class Ellipsoid(
         point: Real[ArrayLike, "{self.ambient_dimension}"] | Sequence[float | int],
         *,
         tolerance: ScalarLike = 1e-6,
+        relative_rank_tolerance: ScalarLike | None = None,
     ) -> Bool[Array, ""]:
         """Return whether a point belongs to the ellipsoid.
+
+        Singular values no greater than ``relative_rank_tolerance`` times the
+        largest singular value are treated as zero; ``None`` selects
+        ``max(generator_matrix.shape) * eps`` in the computation dtype.
 
         Args:
             point: Query point with shape ``(ambient_dimension,)``.
             tolerance: Finite, nonnegative scalar feasibility tolerance.
+            relative_rank_tolerance: Finite, nonnegative relative cutoff for
+                the generator matrix's singular values, or ``None`` for the
+                default numerical-rank threshold.
         """
         point = normalize_query_vector(
             "point", point, self.ambient_dimension, dtype=self.dtype
         )
-        tolerance = normalize_tolerance(tolerance, dtype=self.dtype)
-        dtype = jnp.result_type(self.dtype, point.dtype, tolerance.dtype)
+        minimum_computation_dtype = jnp.result_type(self.dtype, jnp.float32)
+        tolerance = normalize_nonnegative_scalar(
+            "tolerance", tolerance, dtype=minimum_computation_dtype
+        )
+        base_computation_dtype = jnp.result_type(
+            minimum_computation_dtype,
+            point.dtype,
+            tolerance.dtype,
+        )
+        if relative_rank_tolerance is None:
+            relative_rank_tolerance = jnp.asarray(
+                max(self.generator_matrix.shape)
+                * jnp.finfo(base_computation_dtype).eps,
+                dtype=base_computation_dtype,
+            )
+        else:
+            relative_rank_tolerance = normalize_nonnegative_scalar(
+                "relative_rank_tolerance",
+                relative_rank_tolerance,
+                dtype=base_computation_dtype,
+            )
+        dtype = jnp.result_type(base_computation_dtype, relative_rank_tolerance.dtype)
         point = point.astype(dtype)
         tolerance = tolerance.astype(dtype)
+        relative_rank_tolerance = relative_rank_tolerance.astype(dtype)
         center = self.center.astype(dtype)
         generator_matrix = self.generator_matrix.astype(dtype)
         displacement = point - center
         if generator_matrix.shape[1] == 0:
             return _scaled_l2_norm(displacement) <= tolerance
-        latent_point = jnp.linalg.pinv(generator_matrix) @ displacement
+        latent_point = (
+            jnp.linalg.pinv(
+                generator_matrix,
+                rtol=relative_rank_tolerance,
+            )
+            @ displacement
+        )
         reconstruction_error = _scaled_l2_norm(
             generator_matrix @ latent_point - displacement
         )

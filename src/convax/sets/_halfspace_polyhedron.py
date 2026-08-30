@@ -7,8 +7,8 @@ from jaxtyping import ArrayLike, Bool, Float, Real, ScalarLike
 
 from convax._utils import (
     as_float_array,
+    normalize_nonnegative_scalar,
     normalize_query_vector,
-    normalize_tolerance,
     require_finite,
     require_matrix,
     require_vector,
@@ -247,7 +247,9 @@ class HalfspacePolyhedron(
         point = normalize_query_vector(
             "point", point, self.ambient_dimension, dtype=self.dtype
         )
-        tolerance = normalize_tolerance(tolerance, dtype=self.dtype)
+        tolerance = normalize_nonnegative_scalar(
+            "tolerance", tolerance, dtype=self.dtype
+        )
         dtype = jnp.result_type(self.dtype, point.dtype, tolerance.dtype)
         point = point.astype(dtype)
         tolerance = tolerance.astype(dtype)

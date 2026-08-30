@@ -143,17 +143,22 @@ def normalize_query_vector(
     return require_finite(name, value.astype(dtype))
 
 
-def normalize_tolerance(tolerance: ScalarLike, *, dtype: DTypeLike) -> Float[Array, ""]:
-    tolerance = as_float_array(tolerance)
-    require_scalar("tolerance", tolerance)
-    dtype = jnp.result_type(dtype, tolerance.dtype)
-    tolerance = require_finite("tolerance", tolerance.astype(dtype))
-    tolerance = eqx.error_if(
-        tolerance,
-        tolerance < 0,
-        "tolerance must be nonnegative",
+def normalize_nonnegative_scalar(
+    name: str,
+    value: ScalarLike,
+    *,
+    dtype: DTypeLike,
+) -> Float[Array, ""]:
+    value = as_float_array(value)
+    require_scalar(name, value)
+    dtype = jnp.result_type(dtype, value.dtype)
+    value = require_finite(name, value.astype(dtype))
+    value = eqx.error_if(
+        value,
+        value < 0,
+        f"{name} must be nonnegative",
     )
-    return tolerance
+    return value
 
 
 def _scaled_l2_norm(vector: Float[Array, "dimension"]) -> Float[Array, ""]:

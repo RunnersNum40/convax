@@ -64,6 +64,106 @@ def test_containment_rejects_invalid_tolerance(
         compiled_contains(jnp.zeros(1), tolerance)
 
 
+def test_ellipsoid_containment_preserves_ill_conditioned_full_rank_axis() -> None:
+    ellipsoid = Ellipsoid(
+        jnp.zeros(2, dtype=jnp.float32),
+        jnp.diag(jnp.array([1e6, 1.0], dtype=jnp.float32)),
+    )
+    point = jnp.array([0.0, 0.5], dtype=jnp.float32)
+
+    assert ellipsoid.contains(point)
+    assert jax.jit(lambda candidate_point: ellipsoid.contains(candidate_point))(point)
+
+
+def test_ellipsoid_containment_accepts_relative_rank_tolerance() -> None:
+    ellipsoid = Ellipsoid(
+        jnp.zeros(2, dtype=jnp.float32),
+        jnp.diag(jnp.array([1e6, 1.0], dtype=jnp.float32)),
+    )
+    point = jnp.array([0.0, 0.5], dtype=jnp.float32)
+    relative_rank_tolerance = jnp.array(2e-6, dtype=jnp.float32)
+
+    assert not ellipsoid.contains(
+        point,
+        relative_rank_tolerance=relative_rank_tolerance,
+    )
+    assert not jax.jit(
+        lambda candidate_rank_tolerance: ellipsoid.contains(
+            point,
+            relative_rank_tolerance=candidate_rank_tolerance,
+        )
+    )(relative_rank_tolerance)
+
+
+def test_ellipsoid_containment_rejects_vector_relative_rank_tolerance() -> None:
+    ellipsoid = Ellipsoid([0], [[1]])
+
+    with pytest.raises(TypeCheckError, match="parameter 'relative_rank_tolerance'"):
+        ellipsoid.contains([0], relative_rank_tolerance=jnp.array([1e-6]))
+
+
+def test_ellipsoid_containment_rejects_complex_relative_rank_tolerance() -> None:
+    ellipsoid = Ellipsoid([0], [[1]])
+
+    with pytest.raises(TypeError, match="requires real-valued arrays"):
+        ellipsoid.contains(
+            [0],
+            relative_rank_tolerance=jnp.array(1e-6 + 1e-6j),
+        )
+
+
+@pytest.mark.parametrize(
+    ("relative_rank_tolerance", "message"),
+    [
+        pytest.param(-1e-3, "must be nonnegative", id="negative"),
+        pytest.param(jnp.inf, "must contain only finite", id="positive-infinity"),
+        pytest.param(-jnp.inf, "must contain only finite", id="negative-infinity"),
+        pytest.param(jnp.nan, "must contain only finite", id="nan"),
+    ],
+)
+def test_ellipsoid_containment_rejects_invalid_relative_rank_tolerance(
+    relative_rank_tolerance: float | jax.Array,
+    message: str,
+) -> None:
+    ellipsoid = Ellipsoid([0], [[1]])
+    compiled_contains = jax.jit(
+        lambda candidate_rank_tolerance: ellipsoid.contains(
+            [0],
+            relative_rank_tolerance=candidate_rank_tolerance,
+        )
+    )
+
+    with pytest.raises(eqx.EquinoxRuntimeError, match=message):
+        ellipsoid.contains(
+            [0],
+            relative_rank_tolerance=relative_rank_tolerance,
+        )
+    with pytest.raises(jax.errors.JaxRuntimeError, match=message):
+        compiled_contains(relative_rank_tolerance)
+
+
+@pytest.mark.parametrize(
+    "dtype", [jnp.float16, jnp.bfloat16], ids=["float16", "bfloat16"]
+)
+def test_ellipsoid_containment_promotes_low_precision_pseudoinverse(
+    dtype: jnp.dtype,
+) -> None:
+    ellipsoid = Ellipsoid(jnp.zeros(2, dtype=dtype), jnp.eye(2, dtype=dtype))
+    points = jnp.array([[0.5, 0.0], [2.0, 0.0]], dtype=dtype)
+    tolerance = jnp.array(0.0, dtype=dtype)
+    expected = jnp.array([True, False])
+
+    eager = jax.vmap(lambda point: ellipsoid.contains(point, tolerance=tolerance))(
+        points
+    )
+    compiled = jax.jit(
+        jax.vmap(lambda point: ellipsoid.contains(point, tolerance=tolerance))
+    )(points)
+
+    assert jnp.array_equal(eager, expected)
+    assert jnp.array_equal(compiled, expected)
+
+
 @pytest.mark.parametrize(
     "containment_set",
     [
