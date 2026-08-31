@@ -53,3 +53,17 @@ repos:
         language: system
         files: ^(src|tests|examples)/.*\.py$|^pyproject\.toml$
         pass_filenames: false
+
+      - id: zensical
+        name: zensical
+        entry: uv run --locked --group docs zensical build --clean --strict
+        language: system
+        files: ^(src|tests|examples)/.*\.py$|^pyproject\.toml$
+        pass_filenames: false
+
+      - id: build
+        name: build
+        entry: uv build
+        language: system
+        files: ^(src|tests|examples)/.*\.py$|^pyproject\.toml$
+        pass_filenames: false
